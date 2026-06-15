@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../shared/widgets/status_badge.dart';
 
 class BorrowedBooksScreen extends StatefulWidget {
   const BorrowedBooksScreen({super.key});
@@ -10,98 +9,311 @@ class BorrowedBooksScreen extends StatefulWidget {
 }
 
 class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
-  String selectedTab = 'Current';
+  int _selectedTab = 0;
 
-  final List<Map<String, dynamic>> currentBooks = const [
+  static const List<Map<String, dynamic>> _current = [
     {
       'title': 'Research Methods',
       'author': 'Carlo Lopez',
-      'dueDate': '2026-06-17',
+      'dueDate': 'Jun 17, 2026',
       'status': 'Due soon',
       'overdue': false,
+      'callNumber': 'H 62 .L67',
     },
   ];
 
-  final List<Map<String, dynamic>> historyBooks = const [
+  static const List<Map<String, dynamic>> _history = [
     {
       'title': 'Media and Society',
       'author': 'Erika Tan',
-      'dueDate': '2026-05-10',
+      'dueDate': 'May 10, 2026',
       'status': 'Returned',
       'overdue': false,
+      'callNumber': 'P 90 .T36',
     },
   ];
 
   @override
   Widget build(BuildContext context) {
-    final books = selectedTab == 'Current' ? currentBooks : historyBooks;
+    final books = _selectedTab == 0 ? _current : _history;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Borrowed Books')),
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              ToggleButtons(
-                borderRadius: BorderRadius.circular(14),
-                isSelected: ['Current', 'History'].map((e) => e == selectedTab).toList(),
-                onPressed: (index) => setState(() {
-                  selectedTab = index == 0 ? 'Current' : 'History';
-                }),
-                children: const [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    child: Text('Current'),
+      body: Column(
+        children: [
+          _buildHeader(context),
+          Expanded(
+            child: books.isEmpty
+                ? _buildEmpty()
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                    itemCount: books.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 14),
+                    itemBuilder: (context, index) =>
+                        _BorrowedBookCard(book: books[index]),
                   ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    child: Text('History'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(gradient: AppColors.heroGradient),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'My Books',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${_current.length} active loan${_current.length == 1 ? '' : 's'}',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  _TabChip(
+                    label: 'Current',
+                    isSelected: _selectedTab == 0,
+                    onTap: () => setState(() => _selectedTab = 0),
+                  ),
+                  const SizedBox(width: 10),
+                  _TabChip(
+                    label: 'History',
+                    isSelected: _selectedTab == 1,
+                    onTap: () => setState(() => _selectedTab = 1),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: books.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final book = books[index];
-                    return Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: AppColors.card,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(book['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 6),
-                          Text(book['author'] as String, style: const TextStyle(color: AppColors.textMuted)),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              StatusBadge(
-                                label: book['status'] as String,
-                                color: book['overdue'] as bool ? AppColors.danger : AppColors.warning,
-                              ),
-                              const Spacer(),
-                              Text('Due ${book['dueDate'] as String}', style: const TextStyle(color: AppColors.textMuted)),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          const Text('Fine/Status', style: TextStyle(color: AppColors.textMuted)),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
+              const SizedBox(height: 4),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmpty() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.library_books_outlined,
+              size: 36,
+              color: AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No books here',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Browse the catalog to borrow books.',
+            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TabChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _TabChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.7),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BorrowedBookCard extends StatelessWidget {
+  final Map<String, dynamic> book;
+  const _BorrowedBookCard({required this.book});
+
+  @override
+  Widget build(BuildContext context) {
+    final isOverdue = book['overdue'] as bool;
+    final isReturned = book['status'] == 'Returned';
+
+    final Color statusColor;
+    final Color statusBg;
+    final IconData statusIcon;
+
+    if (isReturned) {
+      statusColor = AppColors.success;
+      statusBg = AppColors.successLight;
+      statusIcon = Icons.check_circle_rounded;
+    } else if (isOverdue) {
+      statusColor = AppColors.danger;
+      statusBg = AppColors.dangerLight;
+      statusIcon = Icons.warning_rounded;
+    } else {
+      statusColor = AppColors.warning;
+      statusBg = AppColors.warningLight;
+      statusIcon = Icons.schedule_rounded;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isReturned ? AppColors.border : statusColor.withValues(alpha: 0.2),
+          width: isReturned ? 1 : 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 52,
+            height: 70,
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.menu_book_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  book['title'] as String,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  book['author'] as String,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  book['callNumber'] as String,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 11,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusBg,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(statusIcon, size: 12, color: statusColor),
+                          const SizedBox(width: 5),
+                          Text(
+                            book['status'] as String,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      isReturned ? 'Returned ${book['dueDate']}' : 'Due ${book['dueDate']}',
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

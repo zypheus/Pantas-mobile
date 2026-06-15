@@ -91,7 +91,7 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: child,
-      bottomNavigationBar: const AppBottomNav(),
+      bottomNavigationBar: const FloatingNavBar(),
     );
   }
 }
