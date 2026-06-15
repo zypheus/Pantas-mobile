@@ -1,6 +1,5 @@
 class AppStrings {
-  static const appName = '';
-  static const appFullName = 'Pinoy Automated Next-Generation Technology for Academic Services';
+  static const appName = 'PANTAS';
   static const welcome = 'Welcome to PANTAS';
   static const loginTitle = 'Sign in to continue';
   static const emailOrId = 'Email or Student ID';

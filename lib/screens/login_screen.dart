@@ -20,7 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     super.dispose();
   }
-
   Future<void> _login() async {
     setState(() {
       _isLoading = true;

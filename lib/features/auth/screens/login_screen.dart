@@ -63,32 +63,31 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLogoSection() {
     return Column(
       children: [
-        Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.13),
-            borderRadius: BorderRadius.circular(26),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
-              width: 1.5,
-            ),
-          ),
-          child: Center(
-            child: Image.asset(
-              'assets/logo.png',
-              width: 56,
-              height: 56,
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) => const Icon(
-                Icons.library_books_rounded,
-                size: 44,
-                color: Colors.white,
+        // Logo — colorful circular badge, no extra container needed
+        Image.asset(
+          'assets/d.png',
+          width: 130,
+          height: 130,
+          fit: BoxFit.contain,
+          errorBuilder: (_, _, _) => Container(
+            width: 130,
+            height: 130,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.13),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.25),
+                width: 2,
               ),
+            ),
+            child: const Icon(
+              Icons.library_books_rounded,
+              size: 56,
+              color: Colors.white,
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         const Text(
           'PANTAS',
           style: TextStyle(
@@ -105,6 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.6),
             fontSize: 12,
+            height: 1.5,
           ),
         ),
       ],

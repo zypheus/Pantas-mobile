@@ -82,28 +82,26 @@ class _SplashScreenState extends State<SplashScreen>
                     children: [
                       ScaleTransition(
                         scale: _scaleAnimation,
-                        child: Container(
-                          width: 108,
-                          height: 108,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(32),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Center(
-                            child: Image.asset(
-                              'assets/logo.png',
-                              width: 68,
-                              height: 68,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, _, _) => const Icon(
-                                Icons.library_books_rounded,
-                                size: 52,
-                                color: Colors.white,
+                        child: Image.asset(
+                          'assets/d.png',
+                          width: 140,
+                          height: 140,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => Container(
+                            width: 140,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                width: 2,
                               ),
+                            ),
+                            child: const Icon(
+                              Icons.library_books_rounded,
+                              size: 60,
+                              color: Colors.white,
                             ),
                           ),
                         ),
