@@ -18,14 +18,14 @@ class BookResultCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 170,
-        padding: const EdgeInsets.all(16),
+        width: 160,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha((0.03 * 255).round()),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -33,31 +33,53 @@ class BookResultCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              height: 110,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
+            // Cover image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(
+                'assets/defaultBook.png',
+                height: 100,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  height: 100,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.menu_book_rounded,
+                    size: 40,
+                    color: AppColors.primary,
+                  ),
+                ),
               ),
-              child: const Icon(Icons.book, size: 44, color: AppColors.primary),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Text(
               book.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                height: 1.3,
+              ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               book.author,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 11,
+              ),
             ),
-            const Spacer(),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -65,7 +87,11 @@ class BookResultCard extends StatelessWidget {
                   label: book.availability,
                   color: book.isAvailable ? AppColors.success : AppColors.warning,
                 ),
-                const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textMuted),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: AppColors.textMuted,
+                ),
               ],
             ),
           ],

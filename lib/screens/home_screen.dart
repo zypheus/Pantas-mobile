@@ -85,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildReminderCard(
               context,
               icon: Icons.warning,
+              image: 'assets/defaultBook.png',
               title: 'No due date reminders',
               subtitle: 'Your borrowed items are all clear.',
               backgroundColor: Colors.blue.shade50,
@@ -132,6 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildReminderCard(
     BuildContext context, {
     required IconData icon,
+    String? image,
     required String title,
     required String subtitle,
     required Color backgroundColor,
@@ -144,11 +146,24 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 32,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          if (image != null)
+            Image.asset(
+              image,
+              width: 36,
+              height: 36,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => Icon(
+                icon,
+                size: 32,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            )
+          else
+            Icon(
+              icon,
+              size: 32,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(

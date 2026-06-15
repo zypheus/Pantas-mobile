@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "name": "Win32",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "C:/Users/paulj/.vscode/flutter/bin/cache/artifacts/engine/windows-x64",
+        "C:/Users/paulj/.vscode/flutter/bin/cache/artifacts/engine/windows-x64/cpp_client_wrapper/include",
+        "C:/Users/paulj/.vscode/flutter/packages/flutter_tools/templates/app_shared/windows.tmpl/flutter"
+      ],
+      "defines": [
+        "_DEBUG",
+        "UNICODE",
+        "_UNICODE"
+      ],
+      "windowsSdkVersion": "10.0.17763.0",
+      "compilerPath": "cl.exe",
+      "cStandard": "c17",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "windows-msvc-x64"
+    }
+  ],
+  "version": 4
+}

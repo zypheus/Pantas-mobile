@@ -80,15 +80,31 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
                           width: 150,
                           height: 220,
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
                           ),
-                          child: _book!.coverImage != null
-                              ? Image.network(
-                                  _book!.coverImage!,
-                                  fit: BoxFit.cover,
-                                )
-                              : const Icon(Icons.book, size: 100),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: _book!.coverImage != null
+                                ? Image.network(
+                                    _book!.coverImage!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) => Image.asset(
+                                      'assets/defaultBook.png',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : Image.asset(
+                                    'assets/defaultBook.png',
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
