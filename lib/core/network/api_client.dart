@@ -46,6 +46,18 @@ class ApiClient {
     return _decodeResponse(response);
   }
 
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    bool authenticated = true,
+  }) async {
+    final response = await _httpClient.delete(
+      _uri(path),
+      headers: await _headers(authenticated: authenticated),
+    );
+
+    return _decodeResponse(response);
+  }
+
   Uri _uri(String path, [Map<String, dynamic>? queryParameters]) {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     final uri = Uri.parse('$_baseUrl$normalizedPath');
@@ -60,7 +72,10 @@ class ApiClient {
     required bool authenticated,
     bool hasBody = false,
   }) async {
-    final headers = <String, String>{'Accept': 'application/json'};
+    final headers = <String, String>{
+      'Accept': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+    };
 
     if (hasBody) {
       headers['Content-Type'] = 'application/json';
@@ -77,9 +92,7 @@ class ApiClient {
   }
 
   Map<String, dynamic> _decodeResponse(http.Response response) {
-    final decoded = response.body.isEmpty
-        ? <String, dynamic>{}
-        : jsonDecode(response.body) as Map<String, dynamic>;
+    final decoded = _decodeJsonObject(response);
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return decoded;
@@ -89,6 +102,29 @@ class ApiClient {
       statusCode: response.statusCode,
       message: decoded['message']?.toString() ?? 'Request failed.',
       errors: _parseErrors(decoded['errors']),
+    );
+  }
+
+  Map<String, dynamic> _decodeJsonObject(http.Response response) {
+    if (response.body.isEmpty) return <String, dynamic>{};
+
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) return decoded;
+      if (decoded is Map) {
+        return decoded.map((key, value) => MapEntry(key.toString(), value));
+      }
+    } on FormatException {
+      throw ApiException(
+        statusCode: response.statusCode,
+        message:
+            'The API returned a non-JSON response. Check the Laravel server and ngrok tunnel.',
+      );
+    }
+
+    throw ApiException(
+      statusCode: response.statusCode,
+      message: 'The API returned an unexpected response.',
     );
   }
 

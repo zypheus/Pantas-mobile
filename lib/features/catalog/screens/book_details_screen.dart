@@ -309,7 +309,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
                   ),
                   child: ElevatedButton.icon(
                     onPressed: _details!.book.isAvailable
-                        ? () => _showAddToCartMessage(_details!.book.id)
+                        ? _addBookToCart
                         : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
@@ -419,7 +419,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
                       height: 34,
                       child: ElevatedButton(
                         onPressed: isAvailable
-                            ? () => _showAddToCartMessage(copy.id)
+                            ? () => _addCopyToCart(copy)
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -658,8 +658,17 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
     );
   }
 
-  void _showAddToCartMessage(String bookId) {
-    _borrowService.addToBorrowCart(bookId);
+  void _addBookToCart() {
+    _borrowService.addBookToBorrowCart(_details!.book);
+    _showAddToCartMessage();
+  }
+
+  void _addCopyToCart(BookCopy copy) {
+    _borrowService.addCopyToBorrowCart(copy, _details!.book);
+    _showAddToCartMessage();
+  }
+
+  void _showAddToCartMessage() {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Added to borrow cart.')));

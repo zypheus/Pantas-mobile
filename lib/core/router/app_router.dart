@@ -23,10 +23,7 @@ class AppRouter {
         path: '/splash',
         builder: (context, state) => const SplashScreen(),
       ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
@@ -69,7 +66,10 @@ class AppRouter {
       ),
       GoRoute(
         path: '/room_reservation_details',
-        builder: (context, state) => const RoomReservationDetailsScreen(),
+        builder: (context, state) {
+          final id = state.uri.queryParameters['id'];
+          return RoomReservationDetailsScreen(reservationId: id);
+        },
       ),
       GoRoute(
         path: '/feedback',
@@ -89,9 +89,6 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: const FloatingNavBar(),
-    );
+    return Scaffold(body: child, bottomNavigationBar: const FloatingNavBar());
   }
 }

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/borrowed_book.dart';
+import '../../../services/borrow_service.dart';
 
 class BorrowedBooksScreen extends StatefulWidget {
   const BorrowedBooksScreen({super.key});
@@ -9,29 +13,51 @@ class BorrowedBooksScreen extends StatefulWidget {
 }
 
 class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
+  final _borrowService = BorrowService();
   int _selectedTab = 0;
+  List<BorrowedBook> _current = const [];
+  List<BorrowedBook> _history = const [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  static const List<Map<String, dynamic>> _current = [
-    {
-      'title': 'Research Methods',
-      'author': 'Carlo Lopez',
-      'dueDate': 'Jun 17, 2026',
-      'status': 'Due soon',
-      'overdue': false,
-      'callNumber': 'H 62 .L67',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadBorrowedBooks();
+  }
 
-  static const List<Map<String, dynamic>> _history = [
-    {
-      'title': 'Media and Society',
-      'author': 'Erika Tan',
-      'dueDate': 'May 10, 2026',
-      'status': 'Returned',
-      'overdue': false,
-      'callNumber': 'P 90 .T36',
-    },
-  ];
+  Future<void> _loadBorrowedBooks() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final results = await Future.wait([
+        _borrowService.getCurrentBorrowedBooks(),
+        _borrowService.getBorrowHistory(),
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        _current = results[0];
+        _history = results[1];
+        _isLoading = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.validationSummary;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Unable to load borrowed books.';
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +69,11 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
         children: [
           _buildHeader(context),
           Expanded(
-            child: books.isEmpty
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                ? _buildError()
+                : books.isEmpty
                 ? _buildEmpty()
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
@@ -144,6 +174,36 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
       ),
     );
   }
+
+  Widget _buildError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.wifi_off_rounded,
+              color: AppColors.textMuted,
+              size: 42,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 14),
+            TextButton.icon(
+              onPressed: _loadBorrowedBooks,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _TabChip extends StatelessWidget {
@@ -165,7 +225,9 @@ class _TabChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.12),
+          color: isSelected
+              ? Colors.white
+              : Colors.white.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(24),
         ),
         child: Text(
@@ -173,7 +235,9 @@ class _TabChip extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13,
-            color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.7),
+            color: isSelected
+                ? AppColors.primary
+                : Colors.white.withValues(alpha: 0.7),
           ),
         ),
       ),
@@ -182,13 +246,17 @@ class _TabChip extends StatelessWidget {
 }
 
 class _BorrowedBookCard extends StatelessWidget {
-  final Map<String, dynamic> book;
+  final BorrowedBook book;
   const _BorrowedBookCard({required this.book});
 
   @override
   Widget build(BuildContext context) {
-    final isOverdue = book['overdue'] as bool;
-    final isReturned = book['status'] == 'Returned';
+    final isOverdue = book.isOverdue;
+    final isReturned = book.isReturned;
+    final dateFormat = DateFormat('MMM d, yyyy');
+    final dateLabel = isReturned && book.returnedDate != null
+        ? 'Returned ${dateFormat.format(book.returnedDate!)}'
+        : 'Due ${dateFormat.format(book.dueDate)}';
 
     final Color statusColor;
     final Color statusBg;
@@ -214,7 +282,9 @@ class _BorrowedBookCard extends StatelessWidget {
         color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isReturned ? AppColors.border : statusColor.withValues(alpha: 0.2),
+          color: isReturned
+              ? AppColors.border
+              : statusColor.withValues(alpha: 0.2),
           width: isReturned ? 1 : 1.5,
         ),
         boxShadow: [
@@ -247,7 +317,7 @@ class _BorrowedBookCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  book['title'] as String,
+                  book.title,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
@@ -256,7 +326,7 @@ class _BorrowedBookCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  book['author'] as String,
+                  book.author,
                   style: const TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 13,
@@ -264,7 +334,7 @@ class _BorrowedBookCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  book['callNumber'] as String,
+                  book.callNumber.isEmpty ? 'No call number' : book.callNumber,
                   style: const TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 11,
@@ -289,7 +359,7 @@ class _BorrowedBookCard extends StatelessWidget {
                           Icon(statusIcon, size: 12, color: statusColor),
                           const SizedBox(width: 5),
                           Text(
-                            book['status'] as String,
+                            book.displayStatus,
                             style: TextStyle(
                               color: statusColor,
                               fontWeight: FontWeight.w600,
@@ -301,7 +371,7 @@ class _BorrowedBookCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      isReturned ? 'Returned ${book['dueDate']}' : 'Due ${book['dueDate']}',
+                      dateLabel,
                       style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 11,
