@@ -293,15 +293,25 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          Center(
-            child: Text(
-              'Use your student ID or school email to sign in.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textMuted.withValues(alpha: 0.8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Don't have an account? ",
+                style: TextStyle(fontSize: 13, color: AppColors.textMuted),
               ),
-            ),
+              GestureDetector(
+                onTap: () => context.go('/register'),
+                child: const Text(
+                  'Sign Up',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryLight,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

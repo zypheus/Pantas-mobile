@@ -57,16 +57,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _fPhoto = false;
 
   static const _courses = [
-    'BSIT', 'BSCS', 'BSEd', 'BSBA', 'BSN', 'BSCRIM', 'BSA', 'BSHRM',
+    'BSIT',
+    'BSCS',
+    'BSEd',
+    'BSBA',
+    'BSN',
+    'BSCRIM',
+    'BSA',
+    'BSHRM',
   ];
   static const _years = [
-    '1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year',
+    '1st Year',
+    '2nd Year',
+    '3rd Year',
+    '4th Year',
+    '5th Year',
   ];
 
   static const _programs = [
-    'College of Education', 'College of Engineering', 'College of Business',
-    'College of Nursing', 'College of Criminal Justice', 'College of IT',
-    'College of Arts & Sciences', 'Library Services', 'Administrative Staff',
+    'College of Education',
+    'College of Engineering',
+    'College of Business',
+    'College of Nursing',
+    'College of Criminal Justice',
+    'College of IT',
+    'College of Arts & Sciences',
+    'Library Services',
+    'Administrative Staff',
   ];
 
   static List<String> get _startYears {
@@ -77,11 +94,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     for (final c in [
-      _sFirstName, _sLastName, _sMiddle, _sId, _sMobile, _sAddress,
-      _fFirstName, _fLastName, _fMiddle, _fEmployeeId, _fDesignation,
-      _fMobile, _fAddress,
-      _sEPerson, _sERelation, _sENumber, _sEAddress,
-      _fEPerson, _fERelation, _fENumber, _fEAddress,
+      _sFirstName,
+      _sLastName,
+      _sMiddle,
+      _sId,
+      _sMobile,
+      _sAddress,
+      _fFirstName,
+      _fLastName,
+      _fMiddle,
+      _fEmployeeId,
+      _fDesignation,
+      _fMobile,
+      _fAddress,
+      _sEPerson,
+      _sERelation,
+      _sENumber,
+      _sEAddress,
+      _fEPerson,
+      _fERelation,
+      _fENumber,
+      _fEAddress,
     ]) {
       c.dispose();
     }
@@ -134,7 +167,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           Positioned(
             top: size.height * 0.26,
-            left: 0, right: 0, bottom: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: const ColoredBox(color: AppColors.background),
           ),
           SafeArea(
@@ -170,9 +205,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.13),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 2),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.25),
+                width: 2,
+              ),
             ),
-            child: const Icon(Icons.library_books_rounded, size: 36, color: Colors.white),
+            child: const Icon(
+              Icons.library_books_rounded,
+              size: 36,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -188,7 +230,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 4),
         Text(
           'Fill in your details to register',
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.6),
+            fontSize: 12,
+          ),
         ),
       ],
     );
@@ -258,7 +303,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
           gradient: active ? AppColors.primaryGradient : null,
           borderRadius: BorderRadius.circular(9),
           boxShadow: active
-              ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 2))]
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
               : null,
         ),
         child: Text(
@@ -288,7 +339,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 12),
         _row([
           _field(_sMiddle, 'Middle Initial', Icons.sort_by_alpha_rounded),
-          _field(_sId, 'ID Number', Icons.badge_outlined, type: TextInputType.number),
+          _field(
+            _sId,
+            'ID Number',
+            Icons.badge_outlined,
+            type: TextInputType.number,
+          ),
         ]),
         const SizedBox(height: 12),
         _row([
@@ -310,7 +366,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             items: _years,
             onChanged: (v) => setState(() => _sYear = v),
           ),
-          _field(_sMobile, 'Mobile Number', Icons.phone_outlined, type: TextInputType.phone),
+          _field(
+            _sMobile,
+            'Mobile Number',
+            Icons.phone_outlined,
+            type: TextInputType.phone,
+          ),
         ]),
         const SizedBox(height: 12),
         _field(_sAddress, 'Address', Icons.home_outlined),
@@ -323,7 +384,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ]),
         const SizedBox(height: 12),
         _row([
-          _field(_sENumber, 'Emergency Number', Icons.phone_in_talk_outlined, type: TextInputType.phone),
+          _field(
+            _sENumber,
+            'Emergency Number',
+            Icons.phone_in_talk_outlined,
+            type: TextInputType.phone,
+          ),
           _field(_sEAddress, 'Emergency Address', Icons.location_on_outlined),
         ]),
         const SizedBox(height: 20),
@@ -336,8 +402,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 20),
         _section('Signature'),
         const SizedBox(height: 4),
-        Text('Draw your signature below',
-            style: TextStyle(fontSize: 12, color: AppColors.textMuted.withValues(alpha: 0.8))),
+        Text(
+          'Draw your signature below',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textMuted.withValues(alpha: 0.8),
+          ),
+        ),
         const SizedBox(height: 10),
         _signaturePad(_sSig),
         const SizedBox(height: 8),
@@ -356,8 +427,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final birthdayLabel = _fBirthday == null
         ? 'dd/mm/yyyy'
         : '${_fBirthday!.day.toString().padLeft(2, '0')}/'
-          '${_fBirthday!.month.toString().padLeft(2, '0')}/'
-          '${_fBirthday!.year}';
+              '${_fBirthday!.month.toString().padLeft(2, '0')}/'
+              '${_fBirthday!.year}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,7 +484,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 13,
+                  ),
                   isDense: true,
                 ),
               ),
@@ -452,11 +526,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ]),
         const SizedBox(height: 12),
         _row([
-          _field(_fENumber, 'Contact number', Icons.phone_in_talk_outlined, type: TextInputType.phone),
+          _field(
+            _fENumber,
+            'Contact number',
+            Icons.phone_in_talk_outlined,
+            type: TextInputType.phone,
+          ),
           _field(_fEAddress, 'Emergency address', Icons.location_on_outlined),
         ]),
         const SizedBox(height: 24),
-        _submitBtn('Submit Faculty & Staff Registration', () => context.go('/home')),
+        _submitBtn(
+          'Submit Faculty & Staff Registration',
+          () => context.go('/home'),
+        ),
         const SizedBox(height: 12),
         Center(
           child: TextButton(
@@ -486,10 +568,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _row(List<Widget> children) {
     return Row(
-      children: children
-          .expand((w) => [Expanded(child: w), const SizedBox(width: 10)])
-          .toList()
-        ..removeLast(),
+      children:
+          children
+              .expand((w) => [Expanded(child: w), const SizedBox(width: 10)])
+              .toList()
+            ..removeLast(),
     );
   }
 
@@ -516,7 +599,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 13,
+        ),
         isDense: true,
       ),
     );
@@ -544,7 +630,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 13,
+        ),
         isDense: true,
       ),
     );
@@ -577,9 +666,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
           isExpanded: true,
           style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
           icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-          hint: Text(hint, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+          hint: Text(
+            hint,
+            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+          ),
           items: items
-              .map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 13))))
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(e, style: const TextStyle(fontSize: 13)),
+                ),
+              )
               .toList(),
           onChanged: onChanged,
         ),
@@ -591,8 +688,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final label = _sDob == null
         ? 'Date of Birth'
         : '${_sDob!.day.toString().padLeft(2, '0')}/'
-          '${_sDob!.month.toString().padLeft(2, '0')}/'
-          '${_sDob!.year}';
+              '${_sDob!.month.toString().padLeft(2, '0')}/'
+              '${_sDob!.year}';
     return GestureDetector(
       onTap: _pickDate,
       child: AbsorbPointer(
@@ -609,7 +706,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 13,
+            ),
             isDense: true,
           ),
         ),
@@ -629,12 +729,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         child: hasPhoto
             ? const Center(
-                child: Icon(Icons.check_circle_outline_rounded, size: 36, color: AppColors.success),
+                child: Icon(
+                  Icons.check_circle_outline_rounded,
+                  size: 36,
+                  color: AppColors.success,
+                ),
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.add_a_photo_outlined, size: 28, color: AppColors.textMuted),
+                  const Icon(
+                    Icons.add_a_photo_outlined,
+                    size: 28,
+                    color: AppColors.textMuted,
+                  ),
                   const SizedBox(height: 6),
                   const Text(
                     'Tap to choose a photo',
@@ -702,11 +810,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: Text(
           label,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
         ),
       ),
     );
@@ -716,8 +830,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('Already have an account? ',
-            style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
+        const Text(
+          'Already have an account? ',
+          style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+        ),
         GestureDetector(
           onTap: () => context.go('/login'),
           child: const Text(
