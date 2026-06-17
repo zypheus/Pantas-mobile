@@ -1,43 +1,61 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 
-class NotificationsScreen extends StatelessWidget {
+import '../../../core/network/api_exception.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../models/notification_model.dart';
+import '../../../services/notification_service.dart';
+import '../widgets/notification_card.dart';
+
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
-  static const List<Map<String, dynamic>> _notifications = [
-    {
-      'title': 'Due date reminder',
-      'message': 'Your reserved book is due tomorrow.',
-      'type': 'due',
-      'isRead': false,
-      'time': '2 hrs ago',
-    },
-    {
-      'title': 'Overdue notice',
-      'message': 'Return "Research Methods" to avoid fine.',
-      'type': 'overdue',
-      'isRead': false,
-      'time': '5 hrs ago',
-    },
-    {
-      'title': 'Room reservation update',
-      'message': 'Your room reservation is pending approval.',
-      'type': 'room',
-      'isRead': true,
-      'time': 'Yesterday',
-    },
-    {
-      'title': 'Library announcement',
-      'message': 'New hours available this weekend.',
-      'type': 'announcement',
-      'isRead': true,
-      'time': '2 days ago',
-    },
-  ];
+  @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  final _notificationService = NotificationService();
+  List<NotificationModel> _notifications = const [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final notifications = await _notificationService.getNotifications();
+      if (!mounted) return;
+      setState(() {
+        _notifications = notifications;
+        _isLoading = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.validationSummary;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Unable to load notifications.';
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final unread = _notifications.where((n) => !(n['isRead'] as bool)).length;
+    final unread = _notifications.where((note) => !note.isRead).length;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -45,21 +63,30 @@ class NotificationsScreen extends StatelessWidget {
         children: [
           _buildHeader(context, unread),
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-              itemCount: _notifications.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final note = _notifications[index];
-                return _NotificationCard(
-                  title: note['title'] as String,
-                  message: note['message'] as String,
-                  type: note['type'] as String,
-                  isRead: note['isRead'] as bool,
-                  time: note['time'] as String,
-                );
-              },
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                ? _buildError()
+                : _notifications.isEmpty
+                ? _buildEmpty()
+                : RefreshIndicator(
+                    onRefresh: _loadNotifications,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                      itemCount: _notifications.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final note = _notifications[index];
+                        return NotificationCard(
+                          title: note.title,
+                          message: note.message,
+                          type: note.type,
+                          isRead: note.isRead,
+                          time: _relativeTime(note.createdAt),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -115,150 +142,82 @@ class NotificationsScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-class _NotificationCard extends StatelessWidget {
-  final String title;
-  final String message;
-  final String type;
-  final bool isRead;
-  final String time;
-
-  const _NotificationCard({
-    required this.title,
-    required this.message,
-    required this.type,
-    required this.isRead,
-    required this.time,
-  });
-
-  _NotificationStyle get _style {
-    switch (type) {
-      case 'overdue':
-        return _NotificationStyle(
-          icon: Icons.warning_amber_rounded,
-          color: AppColors.danger,
-          bgColor: AppColors.dangerLight,
-        );
-      case 'due':
-        return _NotificationStyle(
-          icon: Icons.schedule_rounded,
-          color: AppColors.warning,
-          bgColor: AppColors.warningLight,
-        );
-      case 'room':
-        return _NotificationStyle(
-          icon: Icons.meeting_room_rounded,
-          color: const Color(0xFF0EA5E9),
-          bgColor: const Color(0xFFE0F2FE),
-        );
-      default:
-        return _NotificationStyle(
-          icon: Icons.campaign_rounded,
-          color: AppColors.primaryLight,
-          bgColor: AppColors.surface,
-        );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = _style;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isRead ? AppColors.card : AppColors.card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isRead
-              ? AppColors.border
-              : s.color.withValues(alpha: 0.25),
-          width: isRead ? 1 : 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildEmpty() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
-              color: s.bgColor,
-              borderRadius: BorderRadius.circular(13),
+              color: AppColors.surface,
+              shape: BoxShape.circle,
             ),
-            child: Icon(s.icon, color: s.color, size: 22),
+            child: const Icon(
+              Icons.notifications_none_rounded,
+              size: 36,
+              color: AppColors.textMuted,
+            ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: isRead
-                              ? FontWeight.w500
-                              : FontWeight.w700,
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    if (!isRead)
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: s.color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  message,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textMuted,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  time,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textMuted.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 16),
+          const Text(
+            'No notifications',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'You are all caught up.',
+            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
           ),
         ],
       ),
     );
   }
-}
 
-class _NotificationStyle {
-  final IconData icon;
-  final Color color;
-  final Color bgColor;
-  const _NotificationStyle({
-    required this.icon,
-    required this.color,
-    required this.bgColor,
-  });
+  Widget _buildError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.wifi_off_rounded,
+              color: AppColors.textMuted,
+              size: 42,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 14),
+            TextButton.icon(
+              onPressed: _loadNotifications,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _relativeTime(DateTime dateTime) {
+    if (dateTime.millisecondsSinceEpoch == 0) return '';
+
+    final diff = DateTime.now().difference(dateTime);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) return '${diff.inMinutes} min ago';
+    if (diff.inDays < 1) return '${diff.inHours} hrs ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    return '${diff.inDays} days ago';
+  }
 }
