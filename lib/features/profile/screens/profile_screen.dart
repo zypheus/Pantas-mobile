@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/borrowed_book.dart';
 import '../../../models/user.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/borrow_service.dart';
 import '../../../services/user_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -16,21 +19,31 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _userService = UserService();
   final _authService = AuthService();
+  final _borrowService = BorrowService();
   bool _isLoading = true;
   User? _user;
+  List<BorrowedBook> _currentBooks = const [];
+  List<BorrowedBook> _historyBooks = const [];
+  int _borrowedTab = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    _loadAll();
   }
 
-  Future<void> _loadUserProfile() async {
+  Future<void> _loadAll() async {
     try {
-      final user = await _userService.getCurrentUser();
+      final results = await Future.wait([
+        _userService.getCurrentUser(),
+        _borrowService.getCurrentBorrowedBooks(),
+        _borrowService.getBorrowHistory(),
+      ]);
       if (mounted) {
         setState(() {
-          _user = user;
+          _user = results[0] as User;
+          _currentBooks = results[1] as List<BorrowedBook>;
+          _historyBooks = results[2] as List<BorrowedBook>;
           _isLoading = false;
         });
       }
@@ -92,6 +105,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildQrCard(),
+                  const SizedBox(height: 24),
+                  _buildBorrowedSection(),
                   const SizedBox(height: 24),
                   _buildSection('Account', [
                     _ProfileTile(
@@ -306,6 +321,195 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Scan at the library desk',
             style: TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBorrowedSection() {
+    final books = _borrowedTab == 0 ? _currentBooks : _historyBooks;
+    final dateFormat = DateFormat('MMM d, yyyy');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'MY BOOKS',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textMuted,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const Spacer(),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.all(2),
+              child: Row(
+                children: [
+                  _BorrowTabChip(
+                    label: 'Current',
+                    isSelected: _borrowedTab == 0,
+                    onTap: () => setState(() => _borrowedTab = 0),
+                  ),
+                  _BorrowTabChip(
+                    label: 'History',
+                    isSelected: _borrowedTab == 1,
+                    onTap: () => setState(() => _borrowedTab = 1),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (books.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 28),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.library_books_outlined,
+                  size: 32,
+                  color: AppColors.textMuted,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _borrowedTab == 0
+                      ? 'No active loans'
+                      : 'No borrowing history',
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                for (int i = 0; i < books.length; i++) ...[
+                  _buildBorrowedBookRow(books[i], dateFormat),
+                  if (i < books.length - 1)
+                    const Divider(
+                      height: 1,
+                      indent: 70,
+                      color: AppColors.border,
+                    ),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildBorrowedBookRow(BorrowedBook book, DateFormat dateFormat) {
+    final isOverdue = book.isOverdue;
+    final isReturned = book.isReturned;
+
+    final Color statusColor;
+    final IconData statusIcon;
+
+    if (isReturned) {
+      statusColor = AppColors.success;
+      statusIcon = Icons.check_circle_rounded;
+    } else if (isOverdue) {
+      statusColor = AppColors.danger;
+      statusIcon = Icons.warning_rounded;
+    } else {
+      statusColor = AppColors.warning;
+      statusIcon = Icons.schedule_rounded;
+    }
+
+    final dateLabel = isReturned && book.returnedDate != null
+        ? 'Returned ${dateFormat.format(book.returnedDate!)}'
+        : 'Due ${dateFormat.format(book.dueDate)}';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.menu_book_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  book.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  book.author,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  dateLabel,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(statusIcon, size: 18, color: statusColor),
         ],
       ),
     );
@@ -545,6 +749,41 @@ class _PasswordField extends StatelessWidget {
                 ? Icons.visibility_off_outlined
                 : Icons.visibility_outlined,
             size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BorrowTabChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _BorrowTabChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : AppColors.textMuted,
           ),
         ),
       ),
