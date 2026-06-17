@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/book.dart';
+import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../services/borrow_service.dart';
 import '../../../services/catalog_service.dart';
 
@@ -62,7 +63,25 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SkeletonPage(
+              children: [
+                SkeletonBox(
+                  height: 220,
+                  width: double.infinity,
+                  borderRadius: BorderRadius.all(Radius.circular(20)),
+                  margin: EdgeInsets.only(bottom: 20),
+                ),
+                SkeletonLine(width: double.infinity),
+                SizedBox(height: 12),
+                SkeletonLine(width: 220),
+                SizedBox(height: 20),
+                SkeletonBox(height: 44, width: double.infinity),
+                SizedBox(height: 12),
+                SkeletonBox(height: 44, width: double.infinity),
+                SizedBox(height: 12),
+                SkeletonBox(height: 44, width: double.infinity),
+              ],
+            )
           : _errorMessage != null
           ? Center(
               child: TextButton.icon(

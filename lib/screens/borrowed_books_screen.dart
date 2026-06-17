@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/borrowed_book.dart';
 import '../services/borrow_service.dart';
+import '../shared/widgets/skeleton_loading.dart';
 
 class BorrowedBooksScreen extends StatefulWidget {
   const BorrowedBooksScreen({super.key});
@@ -66,7 +67,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
         title: const Text('My Borrowed Books'),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SkeletonList(itemCount: 4, padding: EdgeInsets.all(16))
           : _borrowedBooks.isEmpty
               ? Center(
                   child: Column(

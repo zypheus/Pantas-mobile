@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../shared/widgets/skeleton_loading.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -62,7 +63,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Profile'),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SkeletonPage(
+              children: [
+                SkeletonCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonBox(
+                        height: 18,
+                        width: 180,
+                        margin: EdgeInsets.only(bottom: 16),
+                      ),
+                      SkeletonBox(
+                        height: 80,
+                        width: 80,
+                        borderRadius: BorderRadius.all(Radius.circular(40)),
+                        margin: EdgeInsets.only(bottom: 16),
+                      ),
+                      SkeletonLine(width: 240),
+                      SizedBox(height: 20),
+                      SkeletonCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SkeletonLine(width: double.infinity),
+                            SizedBox(height: 12),
+                            SkeletonLine(width: double.infinity),
+                            SizedBox(height: 12),
+                            SkeletonLine(width: 120),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(

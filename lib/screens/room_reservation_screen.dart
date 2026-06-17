@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/room_service.dart';
+import '../shared/widgets/skeleton_loading.dart';
 
 class RoomReservationScreen extends StatefulWidget {
   const RoomReservationScreen({super.key});
@@ -188,7 +189,32 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
             ),
             const SizedBox(height: 12),
             _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const SkeletonCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(
+                          height: 18,
+                          width: 140,
+                          margin: EdgeInsets.only(bottom: 12),
+                        ),
+                        SkeletonBox(
+                          height: 44,
+                          width: double.infinity,
+                          margin: EdgeInsets.only(bottom: 12),
+                        ),
+                        SkeletonBox(
+                          height: 18,
+                          width: 140,
+                          margin: EdgeInsets.only(bottom: 12),
+                        ),
+                        SkeletonBox(
+                          height: 44,
+                          width: double.infinity,
+                        ),
+                      ],
+                    ),
+                  )
                 : _availableRooms.isEmpty
                     ? const Text('No rooms available for this date')
                     : DropdownButton<String>(

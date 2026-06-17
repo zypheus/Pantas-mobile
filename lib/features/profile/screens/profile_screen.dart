@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/borrowed_book.dart';
 import '../../../models/user.dart';
@@ -83,7 +84,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: SkeletonPage(
+          children: [
+            SkeletonCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonBox(
+                    height: 24,
+                    width: 150,
+                    margin: EdgeInsets.only(bottom: 16),
+                  ),
+                  SkeletonBox(
+                    height: 80,
+                    width: 80,
+                    borderRadius: BorderRadius.all(Radius.circular(40)),
+                    margin: EdgeInsets.only(bottom: 16),
+                  ),
+                  SkeletonLine(width: 200),
+                  SizedBox(height: 24),
+                  SkeletonCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonLine(width: double.infinity),
+                        SizedBox(height: 12),
+                        SkeletonLine(width: double.infinity),
+                        SizedBox(height: 12),
+                        SkeletonLine(width: 120),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     final userName = _user?.name.isNotEmpty == true ? _user!.name : 'User';

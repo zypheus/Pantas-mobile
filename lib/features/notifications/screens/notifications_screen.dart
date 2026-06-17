@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/notification_model.dart';
+import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../services/notification_service.dart';
 import '../widgets/notification_card.dart';
 
@@ -64,7 +65,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           _buildHeader(context, unread),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const SkeletonList(itemCount: 4, padding: EdgeInsets.fromLTRB(20, 20, 20, 16))
                 : _errorMessage != null
                 ? _buildError()
                 : _notifications.isEmpty

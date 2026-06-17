@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/room.dart';
 import '../../../services/room_service.dart';
@@ -139,7 +140,27 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
           _buildHeader(),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const SkeletonPage(
+                    children: [
+                      SkeletonCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SkeletonBox(
+                              height: 200,
+                              width: double.infinity,
+                              margin: EdgeInsets.only(bottom: 16),
+                            ),
+                            SkeletonLine(width: double.infinity),
+                            SizedBox(height: 12),
+                            SkeletonLine(width: 180),
+                            SizedBox(height: 20),
+                            SkeletonBox(height: 52, width: double.infinity),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
                 : _errorMessage != null
                 ? _buildError()
                 : SingleChildScrollView(

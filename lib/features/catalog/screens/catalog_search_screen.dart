@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../models/book.dart';
 import '../../../services/catalog_service.dart';
 import '../widgets/book_result_card.dart';
@@ -227,7 +228,7 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
 
   Widget _buildResultsList() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const SkeletonList(itemCount: 5, padding: EdgeInsets.fromLTRB(20, 20, 20, 16));
     }
 
     if (_errorMessage != null) {
