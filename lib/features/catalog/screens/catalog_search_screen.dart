@@ -253,7 +253,7 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
         final book = _results[index];
         return BookResultCard(
           book: book,
-          onTap: () => context.go('/book_details?id=${book.id}'),
+          onTap: () => context.push('/book_details?id=${book.id}'),
         );
       },
     );

@@ -155,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
           final book = _newArrivals[index];
           return BookResultCard(
             book: book,
-            onTap: () => context.go('/book_details?id=${book.id}'),
+            onTap: () => context.push('/book_details?id=${book.id}'),
           );
         },
       ),
