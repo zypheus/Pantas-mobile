@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/book.dart';
+import '../../../models/borrowed_book.dart';
+import '../../../services/borrow_service.dart';
 import '../../../services/catalog_service.dart';
 import '../../../shared/widgets/section_title.dart';
 import '../../../features/catalog/widgets/book_result_card.dart';
@@ -15,14 +17,19 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _catalogService = CatalogService();
+  final _borrowService = BorrowService();
   List<Book> _newArrivals = const [];
+  List<BorrowedBook> _currentLoans = const [];
   bool _isLoadingNewArrivals = true;
+  bool _isLoadingLoans = true;
+  bool _loanStatsFailed = false;
   String? _newArrivalsError;
 
   @override
   void initState() {
     super.initState();
     _loadNewArrivals();
+    _loadLoanStats();
   }
 
   Future<void> _loadNewArrivals() async {
@@ -47,8 +54,33 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadLoanStats() async {
+    setState(() {
+      _isLoadingLoans = true;
+      _loanStatsFailed = false;
+    });
+
+    try {
+      final loans = await _borrowService.getCurrentBorrowedBooks();
+      if (!mounted) return;
+      setState(() {
+        _currentLoans = loans;
+        _isLoadingLoans = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _currentLoans = const [];
+        _loanStatsFailed = true;
+        _isLoadingLoans = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final reminder = _loanStatsFailed ? null : _buildLoanReminder();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
@@ -61,8 +93,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildStatsRow(),
-                  const SizedBox(height: 24),
-                  _buildReminderCard(),
+                  if (reminder != null) ...[
+                    const SizedBox(height: 24),
+                    _buildReminderCard(reminder),
+                  ],
                   const SizedBox(height: 24),
                   SectionTitle(
                     title: 'New Arrivals',
@@ -132,11 +166,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStatsRow() {
+    final dueSoonCount = _dueSoonLoans.length;
+    final overdueCount = _overdueLoans.length;
+
     return Row(
       children: [
         Expanded(
           child: _StatCard(
-            value: '2',
+            value: _statValue(_currentLoans.length),
             label: 'Active Loans',
             icon: Icons.library_books_rounded,
             color: AppColors.primary,
@@ -145,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            value: '1',
+            value: _statValue(dueSoonCount),
             label: 'Due Soon',
             icon: Icons.schedule_rounded,
             color: AppColors.warning,
@@ -154,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            value: '0',
+            value: _statValue(overdueCount),
             label: 'Overdue',
             icon: Icons.warning_amber_rounded,
             color: AppColors.danger,
@@ -164,19 +201,116 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildReminderCard() {
+  String _statValue(int value) {
+    if (_isLoadingLoans) return '--';
+    if (_loanStatsFailed) return '0';
+    return value.toString();
+  }
+
+  List<BorrowedBook> get _dueSoonLoans {
+    final today = _dateOnly(DateTime.now());
+
+    return _currentLoans
+        .where((loan) {
+          if (loan.isOverdue || loan.isReturned) return false;
+          final dueDate = _dateOnly(loan.dueDate);
+          final daysUntilDue = dueDate.difference(today).inDays;
+          return daysUntilDue >= 0 && daysUntilDue <= 3;
+        })
+        .toList(growable: false);
+  }
+
+  List<BorrowedBook> get _overdueLoans {
+    return _currentLoans
+        .where((loan) => loan.isOverdue && !loan.isReturned)
+        .toList(growable: false);
+  }
+
+  _LoanReminder? _buildLoanReminder() {
+    if (_isLoadingLoans) return null;
+
+    final overdue = [..._overdueLoans]
+      ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    if (overdue.isNotEmpty) {
+      final loan = overdue.first;
+      final days = loan.daysOverdue;
+      return _LoanReminder(
+        title: days <= 1 ? 'Overdue by 1 day' : 'Overdue by $days days',
+        message:
+            '"${loan.title}" was due on ${_formatShortDate(loan.dueDate)}.',
+        icon: Icons.warning_amber_rounded,
+        color: AppColors.danger,
+        iconBackground: AppColors.danger.withValues(alpha: 0.15),
+        gradientColors: const [Color(0xFFFEF2F2), Color(0xFFFEE2E2)],
+        textColor: const Color(0xFF991B1B),
+        messageColor: const Color(0xFFB91C1C),
+      );
+    }
+
+    final dueSoon = [..._dueSoonLoans]
+      ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    if (dueSoon.isEmpty) return null;
+
+    final loan = dueSoon.first;
+    return _LoanReminder(
+      title: _dueSoonTitle(loan.dueDate),
+      message: '"${loan.title}" is due on ${_formatShortDate(loan.dueDate)}.',
+      icon: Icons.schedule_rounded,
+      color: AppColors.warning,
+      iconBackground: AppColors.warning.withValues(alpha: 0.15),
+      gradientColors: const [Color(0xFFFFFBEB), Color(0xFFFEF3C7)],
+      textColor: const Color(0xFF92400E),
+      messageColor: const Color(0xFFB45309),
+    );
+  }
+
+  String _dueSoonTitle(DateTime dueDate) {
+    final daysUntilDue = _dateOnly(
+      dueDate,
+    ).difference(_dateOnly(DateTime.now())).inDays;
+
+    return switch (daysUntilDue) {
+      0 => 'Due today',
+      1 => 'Due tomorrow',
+      _ => 'Due in $daysUntilDue days',
+    };
+  }
+
+  String _formatShortDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}';
+  }
+
+  DateTime _dateOnly(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  Widget _buildReminderCard(_LoanReminder reminder) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFFFFBEB), Color(0xFFFEF3C7)],
+          colors: reminder.gradientColors,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.warning.withValues(alpha: 0.3),
+          color: reminder.color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -186,41 +320,59 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.15),
+              color: reminder.iconBackground,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.schedule_rounded,
-              color: AppColors.warning,
-              size: 22,
-            ),
+            child: Icon(reminder.icon, color: reminder.color, size: 22),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Due in 2 days',
+                  reminder.title,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
-                    color: Color(0xFF92400E),
+                    color: reminder.textColor,
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
                 Text(
-                  '"Research Methods" is due on June 17.',
-                  style: TextStyle(fontSize: 13, color: Color(0xFFB45309)),
+                  reminder.message,
+                  style: TextStyle(fontSize: 13, color: reminder.messageColor),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.warning),
+          Icon(Icons.chevron_right_rounded, color: reminder.color),
         ],
       ),
     );
   }
+}
+
+class _LoanReminder {
+  final String title;
+  final String message;
+  final IconData icon;
+  final Color color;
+  final Color iconBackground;
+  final List<Color> gradientColors;
+  final Color textColor;
+  final Color messageColor;
+
+  const _LoanReminder({
+    required this.title,
+    required this.message,
+    required this.icon,
+    required this.color,
+    required this.iconBackground,
+    required this.gradientColors,
+    required this.textColor,
+    required this.messageColor,
+  });
 }
 
 class _BannerHeader extends StatelessWidget {
