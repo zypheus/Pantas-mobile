@@ -122,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (_newArrivalsError != null) {
       return SizedBox(
-        height: 218,
+        height: 230,
         child: Center(
           child: TextButton.icon(
             onPressed: _loadNewArrivals,
@@ -135,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (_newArrivals.isEmpty) {
       return const SizedBox(
-        height: 218,
+        height: 230,
         child: Center(
           child: Text(
             'No new arrivals yet.',
@@ -146,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return SizedBox(
-      height: 218,
+      height: 230,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _newArrivals.length,
@@ -164,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNewArrivalsSkeleton() {
     return SizedBox(
-      height: 218,
+      height: 230,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: 3,
