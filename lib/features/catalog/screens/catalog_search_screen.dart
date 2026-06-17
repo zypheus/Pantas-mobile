@@ -93,13 +93,24 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Catalog',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                ),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Catalog',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  _HeaderIconButton(
+                    icon: Icons.shopping_cart_outlined,
+                    tooltip: 'Borrow cart',
+                    onTap: () => context.go('/borrow_cart'),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -280,6 +291,43 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
             style: TextStyle(color: AppColors.textMuted, fontSize: 13),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _HeaderIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white.withValues(alpha: 0.85),
+            size: 20,
+          ),
+        ),
       ),
     );
   }

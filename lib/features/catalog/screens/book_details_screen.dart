@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/book.dart';
 import '../../../services/borrow_service.dart';
@@ -122,6 +123,15 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Borrow cart',
+                    onPressed: () => context.go('/borrow_cart'),
+                    icon: const Icon(
+                      Icons.shopping_cart_outlined,
+                      color: Colors.white,
+                      size: 22,
                     ),
                   ),
                 ],
@@ -669,9 +679,15 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
   }
 
   void _showAddToCartMessage() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Added to borrow cart.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Added to borrow cart.'),
+        action: SnackBarAction(
+          label: 'View cart',
+          onPressed: () => context.go('/borrow_cart'),
+        ),
+      ),
+    );
   }
 }
 
