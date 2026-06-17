@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/borrow_service.dart';
@@ -94,7 +95,14 @@ class _BorrowCartScreenState extends State<BorrowCartScreen> {
     final remainingLoans = _limits?.remainingLoans ?? maxLoans;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Borrow Cart')),
+      appBar: AppBar(
+        title: const Text('Borrow Cart'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/search'),
+        ),
+      ),
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
