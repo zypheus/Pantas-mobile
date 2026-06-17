@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
+import '../shared/widgets/skeleton_loading.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -95,7 +96,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         title: const Text('Notifications'),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SkeletonList(itemCount: 4, padding: EdgeInsets.all(16))
           : _notifications.isEmpty
               ? Center(
                   child: Column(

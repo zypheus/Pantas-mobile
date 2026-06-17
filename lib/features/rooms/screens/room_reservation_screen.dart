@@ -7,6 +7,7 @@ import '../../../models/room.dart';
 import '../../../models/room_reservation.dart';
 import '../../../services/room_service.dart';
 import '../../../shared/widgets/status_badge.dart';
+import '../../../shared/widgets/skeleton_loading.dart';
 import '../../rooms/widgets/time_slot_chip.dart';
 
 class RoomReservationScreen extends StatefulWidget {
@@ -162,7 +163,37 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const SkeletonPage(
+                children: [
+                  SkeletonCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(
+                          height: 18,
+                          width: 180,
+                          margin: EdgeInsets.only(bottom: 16),
+                        ),
+                        SkeletonBox(
+                          height: 180,
+                          width: double.infinity,
+                          borderRadius: BorderRadius.circular(20),
+                          margin: EdgeInsets.only(bottom: 20),
+                        ),
+                        SkeletonLine(width: double.infinity),
+                        SizedBox(height: 12),
+                        SkeletonLine(width: 220),
+                        SizedBox(height: 24),
+                        SkeletonBox(height: 18, width: 140, margin: EdgeInsets.only(bottom: 12)),
+                        SkeletonBox(height: 18, width: double.infinity),
+                        SizedBox(height: 24),
+                        SkeletonBox(height: 18, width: 140, margin: EdgeInsets.only(bottom: 12)),
+                        SkeletonBox(height: 18, width: double.infinity),
+                      ],
+                    ),
+                  ),
+                ],
+              )
             : _errorMessage != null
             ? _buildError()
             : SingleChildScrollView(
@@ -357,7 +388,12 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
 
   Widget _buildTimeSlots() {
     if (_isLoadingAvailability) {
-      return const Center(child: CircularProgressIndicator());
+      return const SkeletonList(
+        itemCount: 3,
+        itemHeight: 44,
+        spacing: 12,
+        padding: EdgeInsets.zero,
+      );
     }
 
     return Wrap(

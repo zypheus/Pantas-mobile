@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/book.dart';
 import '../services/borrow_service.dart';
 import '../services/catalog_service.dart';
+import '../shared/widgets/skeleton_loading.dart';
 
 class BookDetailsScreen extends StatefulWidget {
   final String bookId;
@@ -66,7 +67,25 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
         title: const Text('Book Details'),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SkeletonPage(
+              children: [
+                SkeletonBox(
+                  height: 220,
+                  width: double.infinity,
+                  borderRadius: BorderRadius.all(Radius.circular(20)),
+                  margin: EdgeInsets.only(bottom: 20),
+                ),
+                SkeletonLine(width: double.infinity),
+                SizedBox(height: 12),
+                SkeletonLine(width: 200),
+                SizedBox(height: 24),
+                SkeletonLine(width: double.infinity),
+                SizedBox(height: 12),
+                SkeletonLine(width: double.infinity),
+                SizedBox(height: 12),
+                SkeletonLine(width: 120),
+              ],
+            )
           : _book == null
               ? const Center(child: Text('Book not found'))
               : SingleChildScrollView(

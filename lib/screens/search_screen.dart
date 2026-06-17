@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/book.dart';
 import '../services/catalog_service.dart';
+import '../shared/widgets/skeleton_loading.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -150,7 +151,7 @@ class _SearchScreenState extends State<SearchScreen> {
           // Search Results
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const SkeletonList(itemCount: 4, padding: EdgeInsets.all(16))
                 : _searchResults.isEmpty
                     ? Center(
                         child: Padding(

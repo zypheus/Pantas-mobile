@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../models/room_reservation.dart';
 import '../../../services/room_service.dart';
 import '../../../shared/widgets/status_badge.dart';
+import '../../../shared/widgets/skeleton_loading.dart';
 
 class RoomReservationDetailsScreen extends StatefulWidget {
   final String? reservationId;
@@ -116,7 +117,41 @@ class _RoomReservationDetailsScreenState
       appBar: AppBar(title: const Text('Reservation Details')),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const SkeletonPage(
+                children: [
+                  SkeletonBox(
+                    height: 22,
+                    width: 180,
+                    margin: EdgeInsets.only(bottom: 16),
+                  ),
+                  SkeletonCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(
+                          height: 18,
+                          width: double.infinity,
+                          margin: EdgeInsets.only(bottom: 14),
+                        ),
+                        SkeletonBox(
+                          height: 18,
+                          width: 260,
+                          margin: EdgeInsets.only(bottom: 12),
+                        ),
+                        SkeletonBox(
+                          height: 18,
+                          width: double.infinity,
+                          margin: EdgeInsets.only(bottom: 12),
+                        ),
+                        SkeletonBox(
+                          height: 18,
+                          width: double.infinity,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              )
             : _errorMessage != null
             ? _buildError()
             : reservation == null
