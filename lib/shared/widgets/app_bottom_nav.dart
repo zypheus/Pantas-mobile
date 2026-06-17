@@ -61,8 +61,8 @@ class FloatingNavBar extends StatelessWidget {
               onTap: () => context.go('/search'),
             ),
             _FloatingNavItem(
-              icon: Icons.library_books_rounded,
-              label: 'Borrowed',
+              icon: Icons.meeting_room_rounded,
+              label: 'Rooms',
               isSelected: currentIndex == 2,
               onTap: () => context.go('/borrowed'),
             ),
