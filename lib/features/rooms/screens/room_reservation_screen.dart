@@ -163,7 +163,7 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: _isLoading
-            ? const SkeletonPage(
+            ? SkeletonPage(
                 children: [
                   SkeletonCard(
                     child: Column(
