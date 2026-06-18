@@ -50,6 +50,10 @@ class AppRouter {
             builder: (context, state) => const BorrowedBooksScreen(),
           ),
           GoRoute(
+            path: '/room_reservation',
+            builder: (context, state) => const RoomReservationScreen(),
+          ),
+          GoRoute(
             path: '/notifications',
             builder: (context, state) => const NotificationsScreen(),
           ),
@@ -69,10 +73,6 @@ class AppRouter {
       GoRoute(
         path: '/borrow_cart',
         builder: (context, state) => const BorrowCartScreen(),
-      ),
-      GoRoute(
-        path: '/room_reservation',
-        builder: (context, state) => const RoomReservationScreen(),
       ),
       GoRoute(
         path: '/room_reservation_details',

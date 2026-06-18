@@ -5,7 +5,9 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/room.dart';
 import '../../../models/room_reservation.dart';
+import '../../../models/user.dart';
 import '../../../services/room_service.dart';
+import '../../../services/user_service.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 import '../../rooms/widgets/time_slot_chip.dart';
@@ -18,7 +20,11 @@ class RoomReservationScreen extends StatefulWidget {
 }
 
 class _RoomReservationScreenState extends State<RoomReservationScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _roomService = RoomService();
+  final _userService = UserService();
+  final _notesController = TextEditingController();
+  final List<TextEditingController> _studentNameControllers = [];
   DateTime selectedDate = DateTime.now();
   Room? selectedRoom;
   RoomTimeSlot? selectedSlot;
@@ -29,14 +35,22 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
   bool _isLoadingAvailability = false;
   bool _isSubmitting = false;
   String? _errorMessage;
-
-  final int studentCount = 1;
-  final List<String> studentNames = const ['Jane Doe'];
+  int _studentCount = 1;
 
   @override
   void initState() {
     super.initState();
+    _syncStudentNameControllers();
     _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _studentNameControllers) {
+      controller.dispose();
+    }
+    _notesController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInitialData({bool refresh = false}) async {
@@ -49,14 +63,18 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
       final results = await Future.wait([
         _roomService.getRooms(refresh: refresh),
         _roomService.getUserReservations(refresh: refresh),
+        _userService.getCurrentUser(refresh: refresh),
       ]);
       final rooms = results[0] as List<Room>;
+      final currentUser = results[2] as User?;
 
       if (!mounted) return;
       setState(() {
         _rooms = rooms;
         _reservations = results[1] as List<RoomReservation>;
         selectedRoom = rooms.isEmpty ? null : rooms.first;
+        _prefillPrimaryStudentName(currentUser?.name);
+        _clampStudentCountToSelectedRoom();
         _isLoading = false;
       });
       await _loadAvailability();
@@ -114,6 +132,26 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
       return;
     }
 
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_studentCount > room.capacity) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'This room only allows up to ${room.capacity} students.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final studentNames = _studentNameControllers
+        .take(_studentCount)
+        .map((controller) => controller.text.trim())
+        .toList(growable: false);
+
     setState(() {
       _isSubmitting = true;
     });
@@ -124,9 +162,11 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
         date: selectedDate,
         startTime: slot.startLabel,
         endTime: slot.endLabel,
-        numberOfStudents: studentCount,
+        numberOfStudents: _studentCount,
         studentNames: studentNames,
-        notes: 'Submitted from mobile app.',
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
       );
 
       if (!mounted) return;
@@ -137,7 +177,8 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
           ),
         ),
       );
-      context.go('/room_reservation_details?id=${reservation.id}');
+      await context.push('/room_reservation_details?id=${reservation.id}');
+      await _loadInitialData(refresh: true);
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -315,6 +356,7 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
             onTap: () {
               setState(() {
                 selectedRoom = room;
+                _clampStudentCountToSelectedRoom();
               });
               _loadAvailability();
             },
@@ -426,52 +468,145 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
   }
 
   Widget _buildStudentsCard() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          'Students',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(18),
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Students',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          child: Column(
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.group, color: AppColors.primary),
-                  SizedBox(width: 12),
-                  Text(
-                    '1 student selected',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: studentNames
-                    .map(
-                      (name) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Text(
-                          name,
-                          style: const TextStyle(color: AppColors.textMuted),
-                        ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.group, color: AppColors.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '$_studentCount ${_studentCount == 1 ? 'student' : 'students'} selected',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                    )
-                    .toList(),
-              ),
-            ],
+                    ),
+                    IconButton(
+                      tooltip: 'Remove student',
+                      onPressed: _studentCount > 1
+                          ? () => _setStudentCount(_studentCount - 1)
+                          : null,
+                      icon: const Icon(Icons.remove_circle_outline),
+                      color: AppColors.primary,
+                    ),
+                    IconButton(
+                      tooltip: 'Add student',
+                      onPressed: _canAddStudent
+                          ? () => _setStudentCount(_studentCount + 1)
+                          : null,
+                      icon: const Icon(Icons.add_circle_outline),
+                      color: AppColors.primary,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: List.generate(
+                    _studentCount,
+                    (index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: TextFormField(
+                        controller: _studentNameControllers[index],
+                        textInputAction: index == _studentCount - 1
+                            ? TextInputAction.done
+                            : TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Student ${index + 1} name',
+                          filled: true,
+                          fillColor: AppColors.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Enter student ${index + 1} name.';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                TextFormField(
+                  controller: _notesController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText: 'Notes',
+                    hintText: 'Purpose or request details',
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+
+  bool get _canAddStudent {
+    final roomCapacity = selectedRoom?.capacity ?? 20;
+    return _studentCount < roomCapacity && _studentCount < 20;
+  }
+
+  void _setStudentCount(int value) {
+    setState(() {
+      _studentCount = value.clamp(1, selectedRoom?.capacity ?? 20);
+      _syncStudentNameControllers();
+    });
+  }
+
+  void _syncStudentNameControllers() {
+    while (_studentNameControllers.length < _studentCount) {
+      _studentNameControllers.add(TextEditingController());
+    }
+
+    while (_studentNameControllers.length > _studentCount) {
+      _studentNameControllers.removeLast().dispose();
+    }
+  }
+
+  void _prefillPrimaryStudentName(String? name) {
+    if (name == null || name.trim().isEmpty) return;
+    if (_studentNameControllers.isEmpty) {
+      _syncStudentNameControllers();
+    }
+    final firstController = _studentNameControllers.first;
+    if (firstController.text.trim().isEmpty) {
+      firstController.text = name.trim();
+    }
+  }
+
+  void _clampStudentCountToSelectedRoom() {
+    final capacity = selectedRoom?.capacity;
+    if (capacity == null || capacity <= 0 || _studentCount <= capacity) return;
+    _studentCount = capacity;
+    _syncStudentNameControllers();
   }
 
   Widget _buildReservationsList() {
