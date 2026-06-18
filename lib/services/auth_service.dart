@@ -15,11 +15,11 @@ class AuthService {
   final TokenStorage _tokenStorage = TokenStorage();
   final UserService _userService = UserService();
 
-  Future<bool> login(String credential, String password) async {
+  Future<bool> login(String studentId, [String? unusedPassword]) async {
     final response = await _apiClient.post(
       '/login',
       authenticated: false,
-      body: {'email': credential.trim(), 'password': password},
+      body: {'student_id': studentId.trim()},
     );
 
     final data = _asMap(response['data']);
@@ -72,7 +72,7 @@ class AuthService {
   }
 
   Future<bool> resetPassword(String email) async {
-    // The mobile API does not expose password reset yet.
+    // Student ID mobile login does not use passwords.
     return true;
   }
 

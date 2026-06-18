@@ -57,10 +57,7 @@ class SkeletonLine extends StatelessWidget {
 class SkeletonCard extends StatelessWidget {
   final Widget child;
 
-  const SkeletonCard({
-    super.key,
-    required this.child,
-  });
+  const SkeletonCard({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +68,7 @@ class SkeletonCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -116,7 +113,7 @@ class SkeletonList extends StatelessWidget {
           ],
         ),
       ),
-      separatorBuilder: (_, __) => SizedBox(height: spacing),
+      separatorBuilder: (_, _) => SizedBox(height: spacing),
       itemCount: itemCount,
     );
   }
@@ -125,10 +122,7 @@ class SkeletonList extends StatelessWidget {
 class SkeletonPage extends StatelessWidget {
   final List<Widget> children;
 
-  const SkeletonPage({
-    super.key,
-    required this.children,
-  });
+  const SkeletonPage({super.key, required this.children});
 
   @override
   Widget build(BuildContext context) {

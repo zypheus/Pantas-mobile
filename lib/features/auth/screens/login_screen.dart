@@ -12,23 +12,19 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  bool _obscurePassword = true;
+  final TextEditingController studentIdController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
+    studentIdController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
-    if (emailController.text.trim().isEmpty ||
-        passwordController.text.isEmpty) {
+    if (studentIdController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your email and password.')),
+        const SnackBar(content: Text('Please enter your Student ID.')),
       );
       return;
     }
@@ -36,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await AuthService().login(emailController.text, passwordController.text);
+      await AuthService().login(studentIdController.text);
 
       if (!mounted) return;
       context.go('/home');
@@ -186,11 +182,11 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 28),
           TextField(
-            controller: emailController,
-            keyboardType: TextInputType.emailAddress,
+            controller: studentIdController,
+            keyboardType: TextInputType.text,
             enabled: !_isLoading,
             decoration: InputDecoration(
-              labelText: 'Email or Student ID',
+              labelText: 'Student ID',
               prefixIcon: const Icon(Icons.badge_outlined, size: 20),
               filled: true,
               fillColor: AppColors.surface,
@@ -204,51 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: passwordController,
-            obscureText: _obscurePassword,
-            enabled: !_isLoading,
-            decoration: InputDecoration(
-              labelText: 'Password',
-              prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
-              suffixIcon: GestureDetector(
-                onTap: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
-                child: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  size: 20,
-                ),
-              ),
-              filled: true,
-              fillColor: AppColors.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {},
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              ),
-              child: const Text(
-                'Forgot Password?',
-                style: TextStyle(fontSize: 13),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 22),
           // Gradient login button
           Container(
             width: double.infinity,
@@ -303,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
               GestureDetector(
                 onTap: () => context.go('/register'),
                 child: const Text(
-                  'Sign Up',
+                  'Register',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
