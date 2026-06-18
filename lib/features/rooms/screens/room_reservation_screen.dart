@@ -39,7 +39,7 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
     _loadInitialData();
   }
 
-  Future<void> _loadInitialData() async {
+  Future<void> _loadInitialData({bool refresh = false}) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -47,8 +47,8 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
 
     try {
       final results = await Future.wait([
-        _roomService.getRooms(),
-        _roomService.getUserReservations(),
+        _roomService.getRooms(refresh: refresh),
+        _roomService.getUserReservations(refresh: refresh),
       ]);
       final rooms = results[0] as List<Room>;
 
@@ -75,7 +75,7 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
     }
   }
 
-  Future<void> _loadAvailability() async {
+  Future<void> _loadAvailability({bool refresh = false}) async {
     final room = selectedRoom;
     if (room == null) return;
 
@@ -88,6 +88,7 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
       final availability = await _roomService.getAvailability(
         room.id,
         selectedDate,
+        refresh: refresh,
       );
       if (!mounted) return;
       setState(() {
@@ -184,10 +185,18 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
                         SizedBox(height: 12),
                         SkeletonLine(width: 220),
                         SizedBox(height: 24),
-                        SkeletonBox(height: 18, width: 140, margin: EdgeInsets.only(bottom: 12)),
+                        SkeletonBox(
+                          height: 18,
+                          width: 140,
+                          margin: EdgeInsets.only(bottom: 12),
+                        ),
                         SkeletonBox(height: 18, width: double.infinity),
                         SizedBox(height: 24),
-                        SkeletonBox(height: 18, width: 140, margin: EdgeInsets.only(bottom: 12)),
+                        SkeletonBox(
+                          height: 18,
+                          width: 140,
+                          margin: EdgeInsets.only(bottom: 12),
+                        ),
                         SkeletonBox(height: 18, width: double.infinity),
                       ],
                     ),
@@ -275,7 +284,7 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
             ),
             const SizedBox(height: 14),
             TextButton.icon(
-              onPressed: _loadInitialData,
+              onPressed: () => _loadInitialData(refresh: true),
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Retry'),
             ),

@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 
+import '../core/cache/memory_cache_store.dart';
 import '../core/network/api_client.dart';
 import '../models/room.dart';
 import '../models/room_reservation.dart';
@@ -12,28 +13,51 @@ class RoomService {
   RoomService._internal();
 
   final ApiClient _apiClient = ApiClient();
+  final MemoryCacheStore _cache = MemoryCacheStore.instance;
   String? lastMessage;
 
-  Future<List<Room>> getRooms() async {
-    final response = await _apiClient.get('/rooms');
-    final data = response['data'];
-    if (data is! List) return const [];
+  static const _roomsTtl = Duration(minutes: 15);
+  static const _availabilityTtl = Duration(minutes: 1);
+  static const _reservationsTtl = Duration(minutes: 2);
+  static const _reservationDetailsTtl = Duration(minutes: 2);
 
-    return data
-        .map((item) => Room.fromJson(_asMap(item)))
-        .toList(growable: false);
-  }
+  Future<List<Room>> getRooms({bool refresh = false}) async {
+    return _cache.getOrFetch<List<Room>>(
+      'rooms:list',
+      ttl: _roomsTtl,
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get('/rooms');
+        final data = response['data'];
+        if (data is! List) return const [];
 
-  Future<RoomAvailability> getAvailability(String roomId, DateTime date) async {
-    final response = await _apiClient.get(
-      '/rooms/availability',
-      queryParameters: {
-        'room_id': roomId,
-        'date': DateFormat('yyyy-MM-dd').format(date),
+        return data
+            .map((item) => Room.fromJson(_asMap(item)))
+            .toList(growable: false);
       },
     );
+  }
 
-    return RoomAvailability.fromJson(_asMap(response['data']));
+  Future<RoomAvailability> getAvailability(
+    String roomId,
+    DateTime date, {
+    bool refresh = false,
+  }) async {
+    final dateKey = DateFormat('yyyy-MM-dd').format(date);
+
+    return _cache.getOrFetch<RoomAvailability>(
+      'rooms:availability:$roomId:$dateKey',
+      ttl: _availabilityTtl,
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get(
+          '/rooms/availability',
+          queryParameters: {'room_id': roomId, 'date': dateKey},
+        );
+
+        return RoomAvailability.fromJson(_asMap(response['data']));
+      },
+    );
   }
 
   Future<RoomReservation> submitRoomReservation({
@@ -63,41 +87,77 @@ class RoomService {
     );
 
     lastMessage = response['message']?.toString();
+    invalidateReservationCaches();
+    _cache.invalidateByPrefix('rooms:availability:$roomId:');
+
     return RoomReservation.fromJson(_asMap(response['data']));
   }
 
-  Future<List<RoomReservation>> getUserReservations() async {
-    final response = await _apiClient.get('/rooms/reservations');
-    final data = response['data'];
-    if (data is! List) return const [];
+  Future<List<RoomReservation>> getUserReservations({
+    bool refresh = false,
+  }) async {
+    return _cache.getOrFetch<List<RoomReservation>>(
+      'rooms:reservations:user',
+      ttl: _reservationsTtl,
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get('/rooms/reservations');
+        final data = response['data'];
+        if (data is! List) return const [];
 
-    return data
-        .map((item) => RoomReservation.fromJson(_asMap(item)))
-        .toList(growable: false);
+        return data
+            .map((item) => RoomReservation.fromJson(_asMap(item)))
+            .toList(growable: false);
+      },
+    );
   }
 
-  Future<RoomReservation> getReservationDetails(String id) async {
-    final response = await _apiClient.get('/rooms/reservations/$id');
-    return RoomReservation.fromJson(_asMap(response['data']));
+  Future<RoomReservation> getReservationDetails(
+    String id, {
+    bool refresh = false,
+  }) async {
+    return _cache.getOrFetch<RoomReservation>(
+      'rooms:reservation:$id',
+      ttl: _reservationDetailsTtl,
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get('/rooms/reservations/$id');
+        return RoomReservation.fromJson(_asMap(response['data']));
+      },
+    );
   }
 
   Future<RoomReservation> cancelReservation(String id) async {
     final response = await _apiClient.delete('/rooms/reservations/$id');
     lastMessage = response['message']?.toString();
+    invalidateReservationCaches();
+    _cache.remove('rooms:reservation:$id');
+
     return RoomReservation.fromJson(_asMap(response['data']));
   }
 
-  Future<List<String>> getAvailableRooms(DateTime date) async {
-    final rooms = await getRooms();
+  Future<List<String>> getAvailableRooms(
+    DateTime date, {
+    bool refresh = false,
+  }) async {
+    final rooms = await getRooms(refresh: refresh);
     return rooms.map((room) => room.name).toList(growable: false);
   }
 
-  Future<List<String>> getAvailableTimeSlots(String room, DateTime date) async {
+  Future<List<String>> getAvailableTimeSlots(
+    String room,
+    DateTime date, {
+    bool refresh = false,
+  }) async {
     final rooms = await getRooms();
     final selected = rooms.where((item) => item.name == room).firstOrNull;
     if (selected == null) return const [];
 
-    final availability = await getAvailability(selected.id, date);
+    final availability = await getAvailability(
+      selected.id,
+      date,
+      refresh: refresh,
+    );
     return defaultTimeSlots
         .where((slot) => !availability.isBooked(slot.start24, slot.end24))
         .map((slot) => slot.label)
@@ -123,6 +183,16 @@ class RoomService {
       studentNames: const ['Jane Doe'],
     );
     return true;
+  }
+
+  void invalidateReservationCaches() {
+    _cache.invalidateByPrefix('rooms:reservations:');
+    _cache.invalidateByPrefix('rooms:reservation:');
+    _cache.invalidateByPrefix('rooms:availability:');
+  }
+
+  void invalidateRoomCaches() {
+    _cache.invalidateByPrefix('rooms:');
   }
 
   TimeParts _splitTime(String value) {

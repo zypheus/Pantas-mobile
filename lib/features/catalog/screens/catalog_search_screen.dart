@@ -38,7 +38,7 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
     super.dispose();
   }
 
-  Future<void> _searchCatalog() async {
+  Future<void> _searchCatalog({bool refresh = false}) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -49,6 +49,7 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
         _searchController.text,
         format: _selectedSegment == 1 ? 'ebooks' : null,
         perPage: 20,
+        refresh: refresh,
       );
 
       if (!mounted) return;
@@ -228,13 +229,16 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
 
   Widget _buildResultsList() {
     if (_isLoading) {
-      return const SkeletonList(itemCount: 5, padding: EdgeInsets.fromLTRB(20, 20, 20, 16));
+      return const SkeletonList(
+        itemCount: 5,
+        padding: EdgeInsets.fromLTRB(20, 20, 20, 16),
+      );
     }
 
     if (_errorMessage != null) {
       return Center(
         child: TextButton.icon(
-          onPressed: _searchCatalog,
+          onPressed: () => _searchCatalog(refresh: true),
           icon: const Icon(Icons.refresh_rounded),
           label: Text(_errorMessage!),
         ),

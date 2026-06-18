@@ -31,7 +31,7 @@ class _RoomReservationDetailsScreenState
     _loadReservation();
   }
 
-  Future<void> _loadReservation() async {
+  Future<void> _loadReservation({bool refresh = false}) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -40,8 +40,11 @@ class _RoomReservationDetailsScreenState
     try {
       final reservation =
           widget.reservationId == null || widget.reservationId!.isEmpty
-          ? await _loadMostRecentReservation()
-          : await _roomService.getReservationDetails(widget.reservationId!);
+          ? await _loadMostRecentReservation(refresh: refresh)
+          : await _roomService.getReservationDetails(
+              widget.reservationId!,
+              refresh: refresh,
+            );
 
       if (!mounted) return;
       setState(() {
@@ -63,8 +66,12 @@ class _RoomReservationDetailsScreenState
     }
   }
 
-  Future<RoomReservation?> _loadMostRecentReservation() async {
-    final reservations = await _roomService.getUserReservations();
+  Future<RoomReservation?> _loadMostRecentReservation({
+    bool refresh = false,
+  }) async {
+    final reservations = await _roomService.getUserReservations(
+      refresh: refresh,
+    );
     return reservations.isEmpty ? null : reservations.first;
   }
 
@@ -143,10 +150,7 @@ class _RoomReservationDetailsScreenState
                           width: double.infinity,
                           margin: EdgeInsets.only(bottom: 12),
                         ),
-                        SkeletonBox(
-                          height: 18,
-                          width: double.infinity,
-                        ),
+                        SkeletonBox(height: 18, width: double.infinity),
                       ],
                     ),
                   ),
@@ -186,7 +190,7 @@ class _RoomReservationDetailsScreenState
             ),
             const SizedBox(height: 14),
             TextButton.icon(
-              onPressed: _loadReservation,
+              onPressed: () => _loadReservation(refresh: true),
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Retry'),
             ),

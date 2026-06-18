@@ -24,9 +24,9 @@ class _BorrowCartScreenState extends State<BorrowCartScreen> {
     _loadBorrowLimits();
   }
 
-  Future<void> _loadBorrowLimits() async {
+  Future<void> _loadBorrowLimits({bool refresh = false}) async {
     try {
-      final limits = await _borrowService.getBorrowLimits();
+      final limits = await _borrowService.getBorrowLimits(refresh: refresh);
       if (!mounted) return;
       setState(() {
         _limits = limits;
@@ -62,7 +62,7 @@ class _BorrowCartScreenState extends State<BorrowCartScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
       setState(() {});
-      await _loadBorrowLimits();
+      await _loadBorrowLimits(refresh: true);
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(

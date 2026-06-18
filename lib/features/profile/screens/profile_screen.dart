@@ -33,12 +33,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadAll();
   }
 
-  Future<void> _loadAll() async {
+  Future<void> _loadAll({bool refresh = false}) async {
     try {
       final results = await Future.wait([
-        _userService.getCurrentUser(),
-        _borrowService.getCurrentBorrowedBooks(),
-        _borrowService.getBorrowHistory(),
+        _userService.getCurrentUser(refresh: refresh),
+        _borrowService.getCurrentBorrowedBooks(refresh: refresh),
+        _borrowService.getBorrowHistory(refresh: refresh),
       ]);
       if (mounted) {
         setState(() {

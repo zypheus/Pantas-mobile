@@ -36,14 +36,17 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
     super.dispose();
   }
 
-  Future<void> _loadBookDetails() async {
+  Future<void> _loadBookDetails({bool refresh = false}) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final details = await _catalogService.getBookDetail(widget.bookId);
+      final details = await _catalogService.getBookDetail(
+        widget.bookId,
+        refresh: refresh,
+      );
       if (!mounted) return;
       setState(() {
         _details = details;
@@ -85,7 +88,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
           : _errorMessage != null
           ? Center(
               child: TextButton.icon(
-                onPressed: _loadBookDetails,
+                onPressed: () => _loadBookDetails(refresh: true),
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(_errorMessage!),
               ),

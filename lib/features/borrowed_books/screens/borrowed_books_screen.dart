@@ -31,8 +31,19 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
   String? _errorMessage;
 
   static const _timeOptions = [
-    '6:00', '7:00', '8:00', '9:00', '10:00', '11:00',
-    '12:00', '1:00', '2:00', '3:00', '4:00', '5:00', '6:00',
+    '6:00',
+    '7:00',
+    '8:00',
+    '9:00',
+    '10:00',
+    '11:00',
+    '12:00',
+    '1:00',
+    '2:00',
+    '3:00',
+    '4:00',
+    '5:00',
+    '6:00',
   ];
 
   @override
@@ -48,13 +59,13 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
     super.dispose();
   }
 
-  Future<void> _loadRooms() async {
+  Future<void> _loadRooms({bool refresh = false}) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     try {
-      final rooms = await _roomService.getRooms();
+      final rooms = await _roomService.getRooms(refresh: refresh);
       if (!mounted) return;
       setState(() {
         _rooms = rooms;
@@ -393,9 +404,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
           _buildInfoItem('Reservations require staff approval.'),
           _buildInfoItem('Choose a date from today onward.'),
           _buildInfoItem('Enter the full name of each student attending.'),
-          _buildInfoItem(
-            'You will receive email confirmation when approved.',
-          ),
+          _buildInfoItem('You will receive email confirmation when approved.'),
         ],
       ),
     );
@@ -545,9 +554,10 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: period,
-              items: ['AM', 'PM']
-                  .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                  .toList(),
+              items: [
+                'AM',
+                'PM',
+              ].map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
               onChanged: onPeriodChanged,
             ),
           ),
@@ -610,7 +620,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
             ),
             const SizedBox(height: 14),
             TextButton.icon(
-              onPressed: _loadRooms,
+              onPressed: () => _loadRooms(refresh: true),
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Retry'),
             ),

@@ -26,14 +26,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _loadNotifications();
   }
 
-  Future<void> _loadNotifications() async {
+  Future<void> _loadNotifications({bool refresh = false}) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final notifications = await _notificationService.getNotifications();
+      final notifications = await _notificationService.getNotifications(
+        refresh: refresh,
+      );
       if (!mounted) return;
       setState(() {
         _notifications = notifications;
@@ -65,13 +67,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           _buildHeader(context, unread),
           Expanded(
             child: _isLoading
-                ? const SkeletonList(itemCount: 4, padding: EdgeInsets.fromLTRB(20, 20, 20, 16))
+                ? const SkeletonList(
+                    itemCount: 4,
+                    padding: EdgeInsets.fromLTRB(20, 20, 20, 16),
+                  )
                 : _errorMessage != null
                 ? _buildError()
                 : _notifications.isEmpty
                 ? _buildEmpty()
                 : RefreshIndicator(
-                    onRefresh: _loadNotifications,
+                    onRefresh: () => _loadNotifications(refresh: true),
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                       itemCount: _notifications.length,
@@ -201,7 +206,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
             const SizedBox(height: 14),
             TextButton.icon(
-              onPressed: _loadNotifications,
+              onPressed: () => _loadNotifications(refresh: true),
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Retry'),
             ),

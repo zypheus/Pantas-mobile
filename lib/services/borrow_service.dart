@@ -1,6 +1,8 @@
 import '../models/borrowed_book.dart';
 import '../models/book.dart';
+import '../core/cache/memory_cache_store.dart';
 import '../core/network/api_client.dart';
+import 'catalog_service.dart';
 
 class BorrowService {
   static final BorrowService _instance = BorrowService._internal();
@@ -10,9 +12,14 @@ class BorrowService {
   BorrowService._internal();
 
   final ApiClient _apiClient = ApiClient();
+  final MemoryCacheStore _cache = MemoryCacheStore.instance;
   final List<BorrowCartItem> _borrowCart = [];
   String? lastCheckoutMessage;
   List<String> lastRejectedReasons = const [];
+
+  static const _activeLoansTtl = Duration(minutes: 1);
+  static const _historyTtl = Duration(minutes: 5);
+  static const _limitsTtl = Duration(minutes: 1);
 
   List<String> getBorrowCart() {
     return _borrowCart.map((item) => item.bookId).toList(growable: false);
@@ -68,19 +75,42 @@ class BorrowService {
     _borrowCart.clear();
   }
 
-  Future<List<BorrowedBook>> getCurrentBorrowedBooks() async {
-    final response = await _apiClient.get('/borrowed-books');
-    return _borrowedBooksFromResponse(response);
+  Future<List<BorrowedBook>> getCurrentBorrowedBooks({
+    bool refresh = false,
+  }) async {
+    return _cache.getOrFetch<List<BorrowedBook>>(
+      'borrow:active',
+      ttl: _activeLoansTtl,
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get('/borrowed-books');
+        return _borrowedBooksFromResponse(response);
+      },
+    );
   }
 
-  Future<List<BorrowedBook>> getBorrowHistory() async {
-    final response = await _apiClient.get('/borrow-history');
-    return _borrowedBooksFromResponse(response);
+  Future<List<BorrowedBook>> getBorrowHistory({bool refresh = false}) async {
+    return _cache.getOrFetch<List<BorrowedBook>>(
+      'borrow:history',
+      ttl: _historyTtl,
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get('/borrow-history');
+        return _borrowedBooksFromResponse(response);
+      },
+    );
   }
 
-  Future<BorrowLimits> getBorrowLimits() async {
-    final response = await _apiClient.get('/borrow-limits');
-    return BorrowLimits.fromJson(_asMap(response['data']));
+  Future<BorrowLimits> getBorrowLimits({bool refresh = false}) async {
+    return _cache.getOrFetch<BorrowLimits>(
+      'borrow:limits',
+      ttl: _limitsTtl,
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get('/borrow-limits');
+        return BorrowLimits.fromJson(_asMap(response['data']));
+      },
+    );
   }
 
   Future<bool> submitCheckoutRequest(List<String> bookIds) async {
@@ -97,6 +127,9 @@ class BorrowService {
     lastCheckoutMessage = response['message']?.toString();
     lastRejectedReasons = _rejectedReasons(response);
     _borrowCart.clear();
+    invalidateBorrowCaches();
+    CatalogService().invalidateCatalogCache();
+
     return true;
   }
 
@@ -138,6 +171,10 @@ class BorrowService {
       return value.map((key, value) => MapEntry(key.toString(), value));
     }
     return const {};
+  }
+
+  void invalidateBorrowCaches() {
+    _cache.invalidateByPrefix('borrow:');
   }
 }
 

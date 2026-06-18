@@ -1,3 +1,4 @@
+import '../core/cache/memory_cache_store.dart';
 import '../core/network/api_client.dart';
 import '../models/notification_model.dart';
 
@@ -9,15 +10,27 @@ class NotificationService {
   NotificationService._internal();
 
   final ApiClient _apiClient = ApiClient();
+  final MemoryCacheStore _cache = MemoryCacheStore.instance;
 
-  Future<List<NotificationModel>> getNotifications() async {
-    final response = await _apiClient.get('/notifications');
-    final data = response['data'];
-    if (data is! List) return const [];
+  static const _notificationsTtl = Duration(minutes: 1);
 
-    return data
-        .map((item) => NotificationModel.fromJson(_asMap(item)))
-        .toList(growable: false);
+  Future<List<NotificationModel>> getNotifications({
+    bool refresh = false,
+  }) async {
+    return _cache.getOrFetch<List<NotificationModel>>(
+      'notifications:list',
+      ttl: _notificationsTtl,
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get('/notifications');
+        final data = response['data'];
+        if (data is! List) return const [];
+
+        return data
+            .map((item) => NotificationModel.fromJson(_asMap(item)))
+            .toList(growable: false);
+      },
+    );
   }
 
   Future<bool> markAsRead(String notificationId) async {
@@ -25,9 +38,13 @@ class NotificationService {
     return false;
   }
 
-  Future<int> getUnreadCount() async {
-    final notifications = await getNotifications();
+  Future<int> getUnreadCount({bool refresh = false}) async {
+    final notifications = await getNotifications(refresh: refresh);
     return notifications.where((notification) => !notification.isRead).length;
+  }
+
+  void invalidateNotificationCaches() {
+    _cache.invalidateByPrefix('notifications:');
   }
 }
 

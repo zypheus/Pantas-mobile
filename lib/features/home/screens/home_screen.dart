@@ -32,14 +32,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadLoanStats();
   }
 
-  Future<void> _loadNewArrivals() async {
+  Future<void> _loadNewArrivals({bool refresh = false}) async {
     setState(() {
       _isLoadingNewArrivals = true;
       _newArrivalsError = null;
     });
 
     try {
-      final books = await _catalogService.getNewArrivals(limit: 10);
+      final books = await _catalogService.getNewArrivals(
+        limit: 10,
+        refresh: refresh,
+      );
       if (!mounted) return;
       setState(() {
         _newArrivals = books;
@@ -54,14 +57,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _loadLoanStats() async {
+  Future<void> _loadLoanStats({bool refresh = false}) async {
     setState(() {
       _isLoadingLoans = true;
       _loanStatsFailed = false;
     });
 
     try {
-      final loans = await _borrowService.getCurrentBorrowedBooks();
+      final loans = await _borrowService.getCurrentBorrowedBooks(
+        refresh: refresh,
+      );
       if (!mounted) return;
       setState(() {
         _currentLoans = loans;
@@ -125,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
         height: 230,
         child: Center(
           child: TextButton.icon(
-            onPressed: _loadNewArrivals,
+            onPressed: () => _loadNewArrivals(refresh: true),
             icon: const Icon(Icons.refresh_rounded),
             label: Text(_newArrivalsError!),
           ),

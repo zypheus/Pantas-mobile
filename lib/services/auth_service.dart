@@ -1,5 +1,6 @@
 import '../core/network/api_client.dart';
 import '../core/network/api_exception.dart';
+import '../core/cache/memory_cache_store.dart';
 import '../core/storage/token_storage.dart';
 import '../models/user.dart';
 import 'user_service.dart';
@@ -12,6 +13,7 @@ class AuthService {
   AuthService._internal();
 
   final ApiClient _apiClient = ApiClient();
+  final MemoryCacheStore _cache = MemoryCacheStore.instance;
   final TokenStorage _tokenStorage = TokenStorage();
   final UserService _userService = UserService();
 
@@ -32,6 +34,7 @@ class AuthService {
     }
 
     await _tokenStorage.saveToken(token);
+    _cache.clear();
     _userService.setCurrentUser(User.fromApiJson(data));
     return true;
   }
@@ -46,6 +49,7 @@ class AuthService {
     } finally {
       await _tokenStorage.clearToken();
       _userService.clearCurrentUser();
+      _cache.clear();
     }
 
     return true;
@@ -63,6 +67,7 @@ class AuthService {
     } on ApiException {
       await _tokenStorage.clearToken();
       _userService.clearCurrentUser();
+      _cache.clear();
       return false;
     }
   }
