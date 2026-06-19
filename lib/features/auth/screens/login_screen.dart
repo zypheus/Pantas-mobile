@@ -131,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Pinoy Automated Next-Generation Technology\nfor Academic Services',
+          'Your personal library assistant',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.6),
