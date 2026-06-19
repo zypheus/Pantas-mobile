@@ -5,9 +5,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/room.dart';
 import '../../../models/room_reservation.dart';
-import '../../../models/user.dart';
 import '../../../services/room_service.dart';
-import '../../../services/user_service.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 import '../../rooms/widgets/time_slot_chip.dart';
@@ -22,7 +20,6 @@ class RoomReservationScreen extends StatefulWidget {
 class _RoomReservationScreenState extends State<RoomReservationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _roomService = RoomService();
-  final _userService = UserService();
   final _notesController = TextEditingController();
   final List<TextEditingController> _studentNameControllers = [];
   DateTime selectedDate = DateTime.now();
@@ -60,24 +57,22 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
     });
 
     try {
-      final results = await Future.wait([
-        _roomService.getRooms(refresh: refresh),
-        _roomService.getUserReservations(refresh: refresh),
-        _userService.getCurrentUser(refresh: refresh),
-      ]);
-      final rooms = results[0] as List<Room>;
-      final currentUser = results[2] as User?;
+      final dashboard = await _roomService.getDashboard(
+        date: selectedDate,
+        refresh: refresh,
+      );
+      final rooms = dashboard.rooms;
 
       if (!mounted) return;
       setState(() {
         _rooms = rooms;
-        _reservations = results[1] as List<RoomReservation>;
+        _reservations = dashboard.reservations;
         selectedRoom = rooms.isEmpty ? null : rooms.first;
-        _prefillPrimaryStudentName(currentUser?.name);
+        _availability = dashboard.availability;
+        _prefillPrimaryStudentName(dashboard.currentUser.name);
         _clampStudentCountToSelectedRoom();
         _isLoading = false;
       });
-      await _loadAvailability();
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {

@@ -4,6 +4,7 @@ import '../core/cache/memory_cache_store.dart';
 import '../core/network/api_client.dart';
 import '../models/room.dart';
 import '../models/room_reservation.dart';
+import '../models/user.dart';
 
 class RoomService {
   static final RoomService _instance = RoomService._internal();
@@ -20,6 +21,47 @@ class RoomService {
   static const _availabilityTtl = Duration(minutes: 1);
   static const _reservationsTtl = Duration(minutes: 2);
   static const _reservationDetailsTtl = Duration(minutes: 2);
+  static const _dashboardTtl = Duration(minutes: 1);
+
+  Future<RoomDashboard> getDashboard({
+    DateTime? date,
+    String? roomId,
+    bool refresh = false,
+  }) async {
+    final dateKey = DateFormat('yyyy-MM-dd').format(date ?? DateTime.now());
+    final queryParameters = {'date': dateKey, 'room_id': roomId}
+      ..removeWhere((_, value) => value == null || value == '');
+
+    return _cache.getOrFetch<RoomDashboard>(
+      _cacheKey('rooms:dashboard', queryParameters),
+      ttl: _dashboardTtl,
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get(
+          '/rooms/dashboard',
+          queryParameters: queryParameters,
+        );
+        final data = _asMap(response['data']);
+        final rooms = data['rooms'];
+        final reservations = data['reservations'];
+
+        return RoomDashboard(
+          currentUser: User.fromApiJson(_asMap(data['current_user'])),
+          rooms: rooms is List
+              ? rooms
+                    .map((item) => Room.fromJson(_asMap(item)))
+                    .toList(growable: false)
+              : const [],
+          reservations: reservations is List
+              ? reservations
+                    .map((item) => RoomReservation.fromJson(_asMap(item)))
+                    .toList(growable: false)
+              : const [],
+          availability: RoomAvailability.fromJson(_asMap(data['availability'])),
+        );
+      },
+    );
+  }
 
   Future<List<Room>> getRooms({bool refresh = false}) async {
     return _cache.getOrFetch<List<Room>>(
@@ -189,6 +231,7 @@ class RoomService {
     _cache.invalidateByPrefix('rooms:reservations:');
     _cache.invalidateByPrefix('rooms:reservation:');
     _cache.invalidateByPrefix('rooms:availability:');
+    _cache.invalidateByPrefix('rooms:dashboard:');
   }
 
   void invalidateRoomCaches() {
@@ -210,6 +253,30 @@ class RoomService {
     }
     return const {};
   }
+
+  String _cacheKey(String prefix, Map<String, dynamic> values) {
+    final entries = values.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    final query = entries
+        .map((entry) => '${entry.key}=${entry.value}')
+        .join('&');
+
+    return '$prefix:$query';
+  }
+}
+
+class RoomDashboard {
+  final User currentUser;
+  final List<Room> rooms;
+  final List<RoomReservation> reservations;
+  final RoomAvailability availability;
+
+  const RoomDashboard({
+    required this.currentUser,
+    required this.rooms,
+    required this.reservations,
+    required this.availability,
+  });
 }
 
 class RoomAvailability {

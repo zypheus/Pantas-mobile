@@ -1,4 +1,5 @@
 import '../models/book.dart';
+import '../models/borrowed_book.dart';
 import '../core/cache/memory_cache_store.dart';
 import '../core/network/api_client.dart';
 
@@ -16,6 +17,36 @@ class CatalogService {
   static const _filtersTtl = Duration(minutes: 30);
   static const _searchTtl = Duration(minutes: 5);
   static const _bookDetailsTtl = Duration(minutes: 5);
+  static const _homeOverviewTtl = Duration(minutes: 1);
+
+  Future<HomeOverview> getHomeOverview({bool refresh = false}) async {
+    return _cache.getOrFetch<HomeOverview>(
+      'mobile:home',
+      ttl: _homeOverviewTtl,
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get('/home');
+        final data = _asMap(response['data']);
+        final newArrivals = data['new_arrivals'];
+        final activeLoans = data['active_loans'];
+        final loanStats = _asMap(data['loan_stats']);
+
+        return HomeOverview(
+          newArrivals: newArrivals is List
+              ? newArrivals
+                    .map((item) => Book.fromJson(_asMap(item)))
+                    .toList(growable: false)
+              : const [],
+          activeLoans: activeLoans is List
+              ? activeLoans
+                    .map((item) => BorrowedBook.fromJson(_asMap(item)))
+                    .toList(growable: false)
+              : const [],
+          loanStats: HomeLoanStats.fromJson(loanStats),
+        );
+      },
+    );
+  }
 
   Future<List<Book>> getNewArrivals({
     int limit = 12,
@@ -145,6 +176,7 @@ class CatalogService {
 
   void invalidateCatalogCache() {
     _cache.invalidateByPrefix('catalog:');
+    _cache.invalidateByPrefix('mobile:');
   }
 
   void invalidateBookDetail(String bookId) {
@@ -183,4 +215,42 @@ class CatalogService {
 
     return '$prefix:$query';
   }
+}
+
+class HomeOverview {
+  final List<Book> newArrivals;
+  final List<BorrowedBook> activeLoans;
+  final HomeLoanStats loanStats;
+
+  const HomeOverview({
+    required this.newArrivals,
+    required this.activeLoans,
+    required this.loanStats,
+  });
+}
+
+class HomeLoanStats {
+  final int activeCount;
+  final int dueSoonCount;
+  final int overdueCount;
+
+  const HomeLoanStats({
+    required this.activeCount,
+    required this.dueSoonCount,
+    required this.overdueCount,
+  });
+
+  factory HomeLoanStats.fromJson(Map<String, dynamic> json) {
+    return HomeLoanStats(
+      activeCount: _intValue(json['active_count']),
+      dueSoonCount: _intValue(json['due_soon_count']),
+      overdueCount: _intValue(json['overdue_count']),
+    );
+  }
+}
+
+int _intValue(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
 }
