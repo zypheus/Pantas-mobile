@@ -24,11 +24,12 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   Timer? _searchDebounce;
+  int _searchRequestId = 0;
 
   @override
   void initState() {
     super.initState();
-    _searchCatalog();
+    _loadInitialResults();
   }
 
   @override
@@ -38,7 +39,39 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
     super.dispose();
   }
 
+  Future<void> _loadInitialResults({bool refresh = false}) async {
+    final requestId = ++_searchRequestId;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final results = await _catalogService.getNewArrivals(
+        limit: 20,
+        refresh: refresh,
+      );
+      if (!mounted || requestId != _searchRequestId) return;
+      setState(() {
+        _results = results;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted || requestId != _searchRequestId) return;
+      setState(() {
+        _errorMessage = 'Unable to load catalog.';
+        _isLoading = false;
+      });
+    }
+  }
+
   Future<void> _searchCatalog({bool refresh = false}) async {
+    if (_searchController.text.trim().isEmpty && _selectedSegment == 0) {
+      await _loadInitialResults(refresh: refresh);
+      return;
+    }
+
+    final requestId = ++_searchRequestId;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -52,13 +85,13 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
         refresh: refresh,
       );
 
-      if (!mounted) return;
+      if (!mounted || requestId != _searchRequestId) return;
       setState(() {
         _results = results;
         _isLoading = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || requestId != _searchRequestId) return;
       setState(() {
         _errorMessage = 'Unable to search catalog.';
         _isLoading = false;
@@ -152,7 +185,7 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
                               ? GestureDetector(
                                   onTap: () {
                                     _searchController.clear();
-                                    _searchCatalog();
+                                    _loadInitialResults();
                                   },
                                   child: Icon(
                                     Icons.close_rounded,
@@ -238,7 +271,10 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
     if (_errorMessage != null) {
       return Center(
         child: TextButton.icon(
-          onPressed: () => _searchCatalog(refresh: true),
+          onPressed: () =>
+              _searchController.text.trim().isEmpty && _selectedSegment == 0
+              ? _loadInitialResults(refresh: true)
+              : _searchCatalog(refresh: true),
           icon: const Icon(Icons.refresh_rounded),
           label: Text(_errorMessage!),
         ),

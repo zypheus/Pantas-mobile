@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/book.dart';
 import '../../../models/borrowed_book.dart';
-import '../../../services/borrow_service.dart';
 import '../../../services/catalog_service.dart';
 import '../../../shared/widgets/section_title.dart';
 import '../../../features/catalog/widgets/book_result_card.dart';
@@ -17,7 +16,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _catalogService = CatalogService();
-  final _borrowService = BorrowService();
   List<Book> _newArrivals = const [];
   List<BorrowedBook> _currentLoans = const [];
   bool _isLoadingNewArrivals = true;
@@ -28,53 +26,31 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadNewArrivals();
-    _loadLoanStats();
+    _loadHomeOverview();
   }
 
-  Future<void> _loadNewArrivals({bool refresh = false}) async {
+  Future<void> _loadHomeOverview({bool refresh = false}) async {
     setState(() {
       _isLoadingNewArrivals = true;
-      _newArrivalsError = null;
-    });
-
-    try {
-      final books = await _catalogService.getNewArrivals(
-        limit: 10,
-        refresh: refresh,
-      );
-      if (!mounted) return;
-      setState(() {
-        _newArrivals = books;
-        _isLoadingNewArrivals = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _newArrivalsError = 'Unable to load new arrivals.';
-        _isLoadingNewArrivals = false;
-      });
-    }
-  }
-
-  Future<void> _loadLoanStats({bool refresh = false}) async {
-    setState(() {
       _isLoadingLoans = true;
+      _newArrivalsError = null;
       _loanStatsFailed = false;
     });
 
     try {
-      final loans = await _borrowService.getCurrentBorrowedBooks(
-        refresh: refresh,
-      );
+      final overview = await _catalogService.getHomeOverview(refresh: refresh);
       if (!mounted) return;
       setState(() {
-        _currentLoans = loans;
+        _newArrivals = overview.newArrivals;
+        _currentLoans = overview.activeLoans;
+        _isLoadingNewArrivals = false;
         _isLoadingLoans = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
+        _newArrivalsError = 'Unable to load home data.';
+        _isLoadingNewArrivals = false;
         _currentLoans = const [];
         _loanStatsFailed = true;
         _isLoadingLoans = false;
@@ -130,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
         height: 230,
         child: Center(
           child: TextButton.icon(
-            onPressed: () => _loadNewArrivals(refresh: true),
+            onPressed: () => _loadHomeOverview(refresh: true),
             icon: const Icon(Icons.refresh_rounded),
             label: Text(_newArrivalsError!),
           ),
