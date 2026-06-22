@@ -37,14 +37,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final results = await Future.wait([
         _userService.getCurrentUser(refresh: refresh),
-        _borrowService.getCurrentBorrowedBooks(refresh: refresh),
-        _borrowService.getBorrowHistory(refresh: refresh),
+        _borrowService.getBorrowOverview(refresh: refresh),
       ]);
       if (mounted) {
+        final borrowOverview = results[1] as BorrowOverview;
         setState(() {
           _user = results[0] as User;
-          _currentBooks = results[1] as List<BorrowedBook>;
-          _historyBooks = results[2] as List<BorrowedBook>;
+          _currentBooks = borrowOverview.activeLoans;
+          _historyBooks = borrowOverview.history;
           _isLoading = false;
         });
       }

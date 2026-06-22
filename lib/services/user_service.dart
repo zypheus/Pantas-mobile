@@ -47,6 +47,7 @@ class UserService {
 
     await _tokenStorage.clearToken();
     clearCurrentUser();
+    ApiClient.clearResponseCache();
 
     return true;
   }

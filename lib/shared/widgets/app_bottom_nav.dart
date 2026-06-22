@@ -12,7 +12,7 @@ class FloatingNavBar extends StatelessWidget {
 
     if (location.startsWith('/search')) {
       currentIndex = 1;
-    } else if (location.startsWith('/borrowed')) {
+    } else if (location.startsWith('/room_reservation')) {
       currentIndex = 2;
     } else if (location.startsWith('/notifications')) {
       currentIndex = 3;
@@ -64,7 +64,7 @@ class FloatingNavBar extends StatelessWidget {
               icon: Icons.meeting_room_rounded,
               label: 'Rooms',
               isSelected: currentIndex == 2,
-              onTap: () => context.go('/borrowed'),
+              onTap: () => context.go('/room_reservation'),
             ),
             _FloatingNavItem(
               icon: Icons.notifications_rounded,

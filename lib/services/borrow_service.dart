@@ -17,9 +17,7 @@ class BorrowService {
   String? lastCheckoutMessage;
   List<String> lastRejectedReasons = const [];
 
-  static const _activeLoansTtl = Duration(minutes: 1);
-  static const _historyTtl = Duration(minutes: 5);
-  static const _limitsTtl = Duration(minutes: 1);
+  static const _overviewTtl = Duration(minutes: 1);
 
   List<String> getBorrowCart() {
     return _borrowCart.map((item) => item.bookId).toList(growable: false);
@@ -78,37 +76,34 @@ class BorrowService {
   Future<List<BorrowedBook>> getCurrentBorrowedBooks({
     bool refresh = false,
   }) async {
-    return _cache.getOrFetch<List<BorrowedBook>>(
-      'borrow:active',
-      ttl: _activeLoansTtl,
-      refresh: refresh,
-      fetch: () async {
-        final response = await _apiClient.get('/borrowed-books');
-        return _borrowedBooksFromResponse(response);
-      },
-    );
+    final overview = await getBorrowOverview(refresh: refresh);
+    return overview.activeLoans;
   }
 
   Future<List<BorrowedBook>> getBorrowHistory({bool refresh = false}) async {
-    return _cache.getOrFetch<List<BorrowedBook>>(
-      'borrow:history',
-      ttl: _historyTtl,
-      refresh: refresh,
-      fetch: () async {
-        final response = await _apiClient.get('/borrow-history');
-        return _borrowedBooksFromResponse(response);
-      },
-    );
+    final overview = await getBorrowOverview(refresh: refresh);
+    return overview.history;
   }
 
   Future<BorrowLimits> getBorrowLimits({bool refresh = false}) async {
-    return _cache.getOrFetch<BorrowLimits>(
-      'borrow:limits',
-      ttl: _limitsTtl,
+    final overview = await getBorrowOverview(refresh: refresh);
+    return overview.limits;
+  }
+
+  Future<BorrowOverview> getBorrowOverview({bool refresh = false}) async {
+    return _cache.getOrFetch<BorrowOverview>(
+      'borrow:overview',
+      ttl: _overviewTtl,
       refresh: refresh,
       fetch: () async {
-        final response = await _apiClient.get('/borrow-limits');
-        return BorrowLimits.fromJson(_asMap(response['data']));
+        final response = await _apiClient.get('/borrow-overview');
+        final data = _asMap(response['data']);
+
+        return BorrowOverview(
+          activeLoans: _borrowedBooksFromList(data['active_loans']),
+          history: _borrowedBooksFromList(data['history']),
+          limits: BorrowLimits.fromJson(_asMap(data['limits'])),
+        );
       },
     );
   }
@@ -138,8 +133,7 @@ class BorrowService {
     return true;
   }
 
-  List<BorrowedBook> _borrowedBooksFromResponse(Map<String, dynamic> response) {
-    final data = response['data'];
+  List<BorrowedBook> _borrowedBooksFromList(Object? data) {
     if (data is! List) return const [];
 
     return data
@@ -175,7 +169,20 @@ class BorrowService {
 
   void invalidateBorrowCaches() {
     _cache.invalidateByPrefix('borrow:');
+    _cache.invalidateByPrefix('mobile:');
   }
+}
+
+class BorrowOverview {
+  final List<BorrowedBook> activeLoans;
+  final List<BorrowedBook> history;
+  final BorrowLimits limits;
+
+  const BorrowOverview({
+    required this.activeLoans,
+    required this.history,
+    required this.limits,
+  });
 }
 
 class BorrowCartItem {

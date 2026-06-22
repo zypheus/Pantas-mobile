@@ -35,6 +35,7 @@ class AuthService {
 
     await _tokenStorage.saveToken(token);
     _cache.clear();
+    ApiClient.clearResponseCache();
     _userService.setCurrentUser(User.fromApiJson(data));
     return true;
   }
@@ -50,6 +51,7 @@ class AuthService {
       await _tokenStorage.clearToken();
       _userService.clearCurrentUser();
       _cache.clear();
+      ApiClient.clearResponseCache();
     }
 
     return true;
@@ -68,6 +70,7 @@ class AuthService {
       await _tokenStorage.clearToken();
       _userService.clearCurrentUser();
       _cache.clear();
+      ApiClient.clearResponseCache();
       return false;
     }
   }
