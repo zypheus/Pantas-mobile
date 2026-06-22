@@ -64,6 +64,8 @@ flutter:
   # App assets
   assets:
     - assets/logo.png
+    - assets/Pantasplash.png
+    
     - assets/d.png
     - assets/defaultBook.png
     - assets/Bannernew.jpg

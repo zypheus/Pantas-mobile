@@ -89,13 +89,12 @@ class _SplashScreenState extends State<SplashScreen>
                       ScaleTransition(
                         scale: _scaleAnimation,
                         child: Image.asset(
-                          'assets/logo.png',
-                          width: 140,
-                          height: 140,
+                          'assets/Pantasplash.png',
+                          width: 220,
                           fit: BoxFit.contain,
                           errorBuilder: (_, _, _) => Container(
-                            width: 140,
-                            height: 140,
+                            width: 180,
+                            height: 180,
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
@@ -112,7 +111,7 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 6),
                       Transform.translate(
                         offset: Offset(0, _slideAnimation.value),
                         child: const Text(
@@ -131,7 +130,7 @@ class _SplashScreenState extends State<SplashScreen>
                         child: Text(
                           'Library Management System',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
+                            color: const Color.fromARGB(255, 238, 231, 231).withValues(alpha: 0.6),
                             fontSize: 14,
                             letterSpacing: 0.5,
                           ),
