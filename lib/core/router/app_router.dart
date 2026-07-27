@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/auth/screens/change_password_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
@@ -33,6 +34,11 @@ class AppRouter {
         name: 'register',
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        name: 'change-password',
+        path: '/change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),

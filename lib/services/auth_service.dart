@@ -5,6 +5,16 @@ import '../core/storage/token_storage.dart';
 import '../models/user.dart';
 import 'user_service.dart';
 
+class LoginResult {
+  final String token;
+  final bool mustChangePassword;
+
+  const LoginResult({
+    required this.token,
+    required this.mustChangePassword,
+  });
+}
+
 class AuthService {
   static final AuthService _instance = AuthService._internal();
 
@@ -17,12 +27,19 @@ class AuthService {
   final TokenStorage _tokenStorage = TokenStorage();
   final UserService _userService = UserService();
 
-  Future<bool> login(String studentId, [String? unusedPassword]) async {
+  /// Logs in with student ID and password.
+  /// Returns a [LoginResult] indicating where to route the user next.
+  Future<LoginResult> login(String studentId, String password) async {
     final response = await _apiClient.post(
       '/login',
       authenticated: false,
-      body: {'student_id': studentId.trim()},
+      body: {
+        'student_id': studentId.trim(),
+        'password': password,
+      },
     );
+
+    final mustChangePassword = response['must_change_password'] == true;
 
     final data = _asMap(response['data']);
     final token = data['token']?.toString();
@@ -37,6 +54,39 @@ class AuthService {
     _cache.clear();
     ApiClient.clearResponseCache();
     _userService.setCurrentUser(User.fromApiJson(data));
+
+    return LoginResult(
+      token: token,
+      mustChangePassword: mustChangePassword,
+    );
+  }
+
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    final response = await _apiClient.post(
+      '/student/change-password',
+      body: {
+        'current_password': currentPassword,
+        'password': newPassword,
+        'password_confirmation': newPasswordConfirmation,
+      },
+    );
+
+    final data = _asMap(response['data']);
+    final token = data['token']?.toString();
+
+    if (token != null && token.isNotEmpty) {
+      await _tokenStorage.saveToken(token);
+      _cache.clear();
+      ApiClient.clearResponseCache();
+    }
+
+    // Refresh user data
+    _userService.setCurrentUser(User.fromApiJson(data));
+
     return true;
   }
 

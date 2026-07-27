@@ -13,18 +13,31 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController studentIdController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
     studentIdController.dispose();
+    passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
-    if (studentIdController.text.trim().isEmpty) {
+    final studentId = studentIdController.text.trim();
+    final password = passwordController.text;
+
+    if (studentId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter your Student ID.')),
+      );
+      return;
+    }
+
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your password.')),
       );
       return;
     }
@@ -32,10 +45,15 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await AuthService().login(studentIdController.text);
+      final result = await AuthService().login(studentId, password);
 
       if (!mounted) return;
-      context.go('/home');
+
+      if (result.mustChangePassword) {
+        context.go('/change-password');
+      } else {
+        context.go('/home');
+      }
     } on ApiException catch (exception) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -188,6 +206,37 @@ class _LoginScreenState extends State<LoginScreen> {
             decoration: InputDecoration(
               labelText: 'Student ID',
               prefixIcon: const Icon(Icons.badge_outlined, size: 20),
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          TextField(
+            controller: passwordController,
+            obscureText: _obscurePassword,
+            enabled: !_isLoading,
+            decoration: InputDecoration(
+              labelText: 'Password',
+              prefixIcon: const Icon(Icons.lock_outline, size: 20),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  size: 20,
+                ),
+                onPressed: () {
+                  setState(() => _obscurePassword = !_obscurePassword);
+                },
+              ),
               filled: true,
               fillColor: AppColors.surface,
               border: OutlineInputBorder(
