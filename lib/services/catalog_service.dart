@@ -30,6 +30,15 @@ class CatalogService {
         final newArrivals = data['new_arrivals'];
         final activeLoans = data['active_loans'];
         final loanStats = _asMap(data['loan_stats']);
+        final recommendedRaw = data['recommended_books'] ??
+            data['recommendations'];
+
+        List<Book> recommendedBooks = const [];
+        if (recommendedRaw is List) {
+          recommendedBooks = recommendedRaw
+              .map((item) => Book.fromJson(_asMap(item)))
+              .toList(growable: false);
+        }
 
         return HomeOverview(
           newArrivals: newArrivals is List
@@ -43,7 +52,25 @@ class CatalogService {
                     .toList(growable: false)
               : const [],
           loanStats: HomeLoanStats.fromJson(loanStats),
+          recommendedBooks: recommendedBooks,
         );
+      },
+    );
+  }
+
+  Future<List<Book>> getRecommendations({bool refresh = false}) async {
+    return _cache.getOrFetch<List<Book>>(
+      'mobile:home:recommendations',
+      ttl: const Duration(minutes: 15),
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get('/home/recommendations');
+        final data = response['data'];
+        if (data is! List) return const [];
+
+        return data
+            .map((item) => Book.fromJson(_asMap(item)))
+            .toList(growable: false);
       },
     );
   }
@@ -221,11 +248,13 @@ class HomeOverview {
   final List<Book> newArrivals;
   final List<BorrowedBook> activeLoans;
   final HomeLoanStats loanStats;
+  final List<Book> recommendedBooks;
 
   const HomeOverview({
     required this.newArrivals,
     required this.activeLoans,
     required this.loanStats,
+    this.recommendedBooks = const [],
   });
 }
 

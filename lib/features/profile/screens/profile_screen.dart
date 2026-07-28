@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/attendance_log.dart';
 import '../../../models/borrowed_book.dart';
 import '../../../models/user.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/attendance_service.dart';
 import '../../../services/borrow_service.dart';
 import '../../../services/user_service.dart';
 
@@ -21,11 +23,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _userService = UserService();
   final _authService = AuthService();
   final _borrowService = BorrowService();
+  final _attendanceService = AttendanceService();
   bool _isLoading = true;
   User? _user;
   List<BorrowedBook> _currentBooks = const [];
   List<BorrowedBook> _historyBooks = const [];
   int _borrowedTab = 0;
+  bool _isLoadingAttendance = true;
+  int _monthlyVisits = 0;
+  List<AttendanceLog> _recentVisits = const [];
+  String? _attendanceError;
 
   @override
   void initState() {
@@ -38,19 +45,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final results = await Future.wait([
         _userService.getCurrentUser(refresh: refresh),
         _borrowService.getBorrowOverview(refresh: refresh),
+        _attendanceService.getAttendancePreview(refresh: refresh),
       ]);
       if (mounted) {
         final borrowOverview = results[1] as BorrowOverview;
+        final attendancePreview = results[2] as AttendancePreview;
         setState(() {
           _user = results[0] as User;
           _currentBooks = borrowOverview.activeLoans;
           _historyBooks = borrowOverview.history;
+          _monthlyVisits = attendancePreview.monthlyVisitCount;
+          _recentVisits = attendancePreview.recentVisits;
           _isLoading = false;
+          _isLoadingAttendance = false;
         });
       }
     } on ApiException catch (exception) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _isLoadingAttendance = false;
+        _attendanceError = exception.message;
+      });
       if (exception.isUnauthenticated) {
         context.go('/login');
         return;
@@ -60,7 +76,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ).showSnackBar(SnackBar(content: Text(exception.message)));
     } catch (_) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _isLoadingAttendance = false;
+        _attendanceError = 'Unable to load profile.';
+      });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Unable to load profile.')));
@@ -145,6 +165,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _buildQrCard(),
                   const SizedBox(height: 24),
                   _buildBorrowedSection(),
+                  const SizedBox(height: 24),
+                  _buildAttendanceSection(),
                   const SizedBox(height: 24),
                   _buildSection('Account', [
                     _ProfileTile(
@@ -583,6 +605,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ],
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttendanceSection() {
+    final label = 'Library Visits';
+    final monthlyVisits = _monthlyVisits;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textMuted,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: _isLoadingAttendance
+              ? Column(
+                  children: const [
+                    Icon(Icons.history_rounded,
+                        color: AppColors.textMuted, size: 28),
+                    SizedBox(height: 10),
+                    Text('Loading visits...',
+                        style: TextStyle(color: AppColors.textMuted)),
+                  ],
+                )
+              : _attendanceError != null
+                  ? Column(
+                      children: [
+                        const Icon(Icons.error_outline_rounded,
+                            color: AppColors.danger, size: 28),
+                        const SizedBox(height: 10),
+                        Text(_attendanceError!,
+                            style: const TextStyle(color: AppColors.danger)),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.event_busy_rounded,
+                                color: AppColors.primary, size: 20),
+                            const SizedBox(width: 10),
+                            Text(
+                                'This month: $monthlyVisits ${monthlyVisits == 1 ? 'visit' : 'visits'}'),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        if (_recentVisits.isEmpty)
+                          const Text('No visits recorded.',
+                              style:
+                                  TextStyle(color: AppColors.textMuted)),
+                        ..._recentVisits.take(5).map((visit) {
+                          final time = DateFormat('MMM d, h:mm a')
+                              .format(visit.scannedAt);
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  visit.status.toUpperCase() == 'IN'
+                                      ? Icons.login_rounded
+                                      : Icons.logout_rounded,
+                                  size: 16,
+                                  color: visit.status.toUpperCase() == 'IN'
+                                      ? AppColors.success
+                                      : AppColors.warning,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(time),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
         ),
       ],
     );

@@ -18,10 +18,13 @@ class _HomeScreenState extends State<HomeScreen> {
   final _catalogService = CatalogService();
   List<Book> _newArrivals = const [];
   List<BorrowedBook> _currentLoans = const [];
+  List<Book> _recommendations = const [];
   bool _isLoadingNewArrivals = true;
   bool _isLoadingLoans = true;
+  bool _isLoadingRecommendations = true;
   bool _loanStatsFailed = false;
   String? _newArrivalsError;
+  String? _recommendationsError;
 
   @override
   void initState() {
@@ -33,7 +36,9 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isLoadingNewArrivals = true;
       _isLoadingLoans = true;
+      _isLoadingRecommendations = true;
       _newArrivalsError = null;
+      _recommendationsError = null;
       _loanStatsFailed = false;
     });
 
@@ -43,9 +48,15 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _newArrivals = overview.newArrivals;
         _currentLoans = overview.activeLoans;
+        _recommendations = overview.recommendedBooks;
         _isLoadingNewArrivals = false;
         _isLoadingLoans = false;
+        _isLoadingRecommendations = false;
       });
+
+      if (_recommendations.isEmpty && refresh == false) {
+        _loadRecommendationsFallback();
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -54,6 +65,24 @@ class _HomeScreenState extends State<HomeScreen> {
         _currentLoans = const [];
         _loanStatsFailed = true;
         _isLoadingLoans = false;
+        _isLoadingRecommendations = false;
+      });
+    }
+  }
+
+  Future<void> _loadRecommendationsFallback() async {
+    try {
+      final recommendations = await _catalogService.getRecommendations();
+      if (!mounted) return;
+      setState(() {
+        _recommendations = recommendations;
+        _isLoadingRecommendations = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _recommendationsError = 'Unable to load recommendations.';
+        _isLoadingRecommendations = false;
       });
     }
   }
@@ -79,6 +108,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildReminderCard(reminder),
                   ],
                   const SizedBox(height: 24),
+                  if (_recommendations.isNotEmpty ||
+                      _isLoadingRecommendations ||
+                      _recommendationsError != null) ...[
+                    SectionTitle(
+                      title: 'Recommended for You',
+                      actionLabel: 'View all',
+                      onAction: () => context.go('/search'),
+                    ),
+                    const SizedBox(height: 14),
+                    _buildRecommendationsList(context),
+                    const SizedBox(height: 20),
+                  ],
                   SectionTitle(
                     title: 'New Arrivals',
                     actionLabel: 'View all',
@@ -137,6 +178,135 @@ class _HomeScreenState extends State<HomeScreen> {
           return BookResultCard(
             book: book,
             onTap: () => context.push('/book_details?id=${book.id}'),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRecommendationsList(BuildContext context) {
+    if (_isLoadingRecommendations) {
+      return _buildRecommendationsSkeleton();
+    }
+
+    if (_recommendationsError != null) {
+      return SizedBox(
+        height: 230,
+        child: Center(
+          child: TextButton.icon(
+            onPressed: () => _loadRecommendationsFallback(),
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(_recommendationsError!),
+          ),
+        ),
+      );
+    }
+
+    if (_recommendations.isEmpty) {
+      return const SizedBox(
+        height: 230,
+        child: Center(
+          child: Text(
+            'No recommendations yet.',
+            style: TextStyle(color: AppColors.textMuted),
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 230,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _recommendations.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 14),
+        itemBuilder: (context, index) {
+          final book = _recommendations[index];
+          return BookResultCard(
+            book: book,
+            onTap: () => context.push('/book_details?id=${book.id}'),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRecommendationsSkeleton() {
+    return SizedBox(
+      height: 230,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: 3,
+        padding: EdgeInsets.zero,
+        separatorBuilder: (_, _) => const SizedBox(width: 14),
+        itemBuilder: (context, index) {
+          return Container(
+            width: 160,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 100,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  height: 16,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 12,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                const Spacer(),
+                Row(
+                  children: [
+                    Container(
+                      height: 24,
+                      width: 70,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      height: 16,
+                      width: 16,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           );
         },
       ),
