@@ -135,46 +135,47 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          const _BannerHeader(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildStatsRow(),
-                  if (reminder != null) ...[
-                    const SizedBox(height: 24),
-                    _buildReminderCard(reminder),
-                  ],
-                  const SizedBox(height: 24),
-                  if (_recommendations.isNotEmpty ||
-                      _isLoadingRecommendations ||
-                      _recommendationsError != null) ...[
-                    SectionTitle(
-                      title: _recommendationsTitle,
-                      actionLabel: 'View all',
-                      onAction: () => context.go('/search'),
-                    ),
-                    const SizedBox(height: 14),
-                    _buildRecommendationsList(context),
-                    const SizedBox(height: 20),
-                  ],
-                  SectionTitle(
-                    title: 'New Arrivals',
-                    actionLabel: 'View all',
-                    onAction: () => context.go('/search'),
-                  ),
-                  const SizedBox(height: 14),
-                  _buildNewArrivalsList(context),
-                  const SizedBox(height: 8),
-                ],
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: _buildNotificationBell(context),
               ),
-            ),
+              const SizedBox(height: 16),
+              _buildStatsRow(),
+              if (reminder != null) ...[
+                const SizedBox(height: 24),
+                _buildReminderCard(reminder),
+              ],
+              const SizedBox(height: 24),
+              if (_recommendations.isNotEmpty ||
+                  _isLoadingRecommendations ||
+                  _recommendationsError != null) ...[
+                SectionTitle(
+                  title: _recommendationsTitle,
+                  actionLabel: 'View all',
+                  onAction: () => context.go('/search'),
+                ),
+                const SizedBox(height: 14),
+                _buildRecommendationsList(context),
+                const SizedBox(height: 20),
+              ],
+              SectionTitle(
+                title: 'New Arrivals',
+                actionLabel: 'View all',
+                onAction: () => context.go('/search'),
+              ),
+              const SizedBox(height: 14),
+              _buildNewArrivalsList(context),
+              const SizedBox(height: 8),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -562,6 +563,60 @@ class _HomeScreenState extends State<HomeScreen> {
     return DateTime(date.year, date.month, date.day);
   }
 
+  Widget _buildNotificationBell(BuildContext context) {
+    return GestureDetector(
+      onTap: () => GoRouter.of(context).go('/notifications'),
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  width: 1,
+                ),
+              ),
+              child: const Icon(
+                Icons.notifications_rounded,
+                color: AppColors.navyBrand,
+                size: 22,
+              ),
+            ),
+            Positioned(
+              top: -2,
+              right: 2,
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: const BoxDecoration(
+                  color: AppColors.danger,
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Text(
+                    '3',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildReminderCard(_LoanReminder reminder) {
     return Container(
       width: double.infinity,
@@ -637,96 +692,6 @@ class _LoanReminder {
     required this.textColor,
     required this.messageColor,
   });
-}
-
-class _BannerHeader extends StatelessWidget {
-  const _BannerHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: SizedBox(
-        width: double.infinity,
-        height: 180,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Banner image
-            Positioned.fill(
-              child: Image.asset(
-                'assets/Bannernew.jpg',
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
-                  decoration:
-                      const BoxDecoration(gradient: AppColors.heroGradient),
-                ),
-              ),
-            ),
-
-            // Floating notification bell
-            Positioned(
-              top: 12,
-              right: 16,
-              child: GestureDetector(
-                onTap: () => GoRouter.of(context).go('/notifications'),
-                child: SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // White circle
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            width: 1,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.notifications_rounded,
-                          color: AppColors.navyBrand,
-                          size: 22,
-                        ),
-                      ),
-                      // Red unread badge
-                      Positioned(
-                        top: -2,
-                        right: 2,
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          decoration: const BoxDecoration(
-                            color: AppColors.danger,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Text(
-                              '3',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _StatCard extends StatelessWidget {
