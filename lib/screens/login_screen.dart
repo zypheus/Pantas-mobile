@@ -28,20 +28,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final authService = AuthService();
-      final success = await authService.login(
+      final loginResult = await authService.login(
         _credentialController.text,
         _passwordController.text,
       );
 
       if (!mounted) return;
 
-      if (success) {
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else {
-        setState(() {
-          _errorMessage = 'Invalid credentials. Please try again.';
-        });
+      if (loginResult.mustChangePassword) {
+        // TODO: navigate to change password flow if needed
       }
+
+      Navigator.of(context).pushReplacementNamed('/home');
     } catch (e) {
       setState(() {
         _errorMessage = 'An error occurred. Please try again.';
