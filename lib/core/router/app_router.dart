@@ -67,6 +67,10 @@ class AppRouter {
             path: '/profile',
             builder: (context, state) => const ProfileScreen(),
           ),
+          GoRoute(
+            path: '/feedback',
+            builder: (context, state) => const FeedbackScreen(),
+          ),
         ],
       ),
       GoRoute(
@@ -87,10 +91,7 @@ class AppRouter {
           return RoomReservationDetailsScreen(reservationId: id);
         },
       ),
-      GoRoute(
-        path: '/feedback',
-        builder: (context, state) => const FeedbackScreen(),
-      ),
+
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),

@@ -649,12 +649,80 @@ class _BannerHeader extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         height: 180,
-        child: Image.asset(
-          'assets/Bannernew.jpg',
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => Container(
-            decoration: const BoxDecoration(gradient: AppColors.heroGradient),
-          ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Banner image
+            Positioned.fill(
+              child: Image.asset(
+                'assets/Bannernew.jpg',
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  decoration:
+                      const BoxDecoration(gradient: AppColors.heroGradient),
+                ),
+              ),
+            ),
+
+            // Floating notification bell
+            Positioned(
+              top: 12,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => GoRouter.of(context).go('/notifications'),
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // White circle
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_rounded,
+                          color: AppColors.navyBrand,
+                          size: 22,
+                        ),
+                      ),
+                      // Red unread badge
+                      Positioned(
+                        top: -2,
+                        right: 2,
+                        child: Container(
+                          width: 18,
+                          height: 18,
+                          decoration: const BoxDecoration(
+                            color: AppColors.danger,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '3',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
