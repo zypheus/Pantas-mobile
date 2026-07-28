@@ -4,8 +4,10 @@ import 'package:intl/intl.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/attendance_visit.dart';
 import '../../../models/borrowed_book.dart';
 import '../../../models/user.dart';
+import '../../../services/attendance_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/borrow_service.dart';
 import '../../../services/user_service.dart';
@@ -21,11 +23,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _userService = UserService();
   final _authService = AuthService();
   final _borrowService = BorrowService();
+  final _attendanceService = AttendanceService();
   bool _isLoading = true;
   User? _user;
   List<BorrowedBook> _currentBooks = const [];
   List<BorrowedBook> _historyBooks = const [];
   int _borrowedTab = 0;
+  AttendancePreview? _attendancePreview;
 
   @override
   void initState() {
@@ -38,6 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final results = await Future.wait([
         _userService.getCurrentUser(refresh: refresh),
         _borrowService.getBorrowOverview(refresh: refresh),
+        _attendanceService.getAttendancePreview(),
       ]);
       if (mounted) {
         final borrowOverview = results[1] as BorrowOverview;
@@ -45,6 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _user = results[0] as User;
           _currentBooks = borrowOverview.activeLoans;
           _historyBooks = borrowOverview.history;
+          _attendancePreview = results[2] as AttendancePreview;
           _isLoading = false;
         });
       }
@@ -143,6 +149,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildQrCard(),
+                  const SizedBox(height: 24),
+                  _buildAttendanceSection(),
                   const SizedBox(height: 24),
                   _buildBorrowedSection(),
                   const SizedBox(height: 24),
@@ -354,6 +362,168 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Scan at the library desk',
             style: TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttendanceSection() {
+    final preview = _attendancePreview;
+    final visits = preview?.recentVisits ?? [];
+    final monthlyCount = preview?.monthlyVisitCount ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'LIBRARY VISITS',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textMuted,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$monthlyCount this month',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (visits.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 28),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.meeting_room_outlined,
+                  size: 32,
+                  color: AppColors.textMuted,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'No library visits recorded yet',
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                ),
+              ],
+            ),
+          )
+        else
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                for (int i = 0; i < visits.length; i++) ...[
+                  _buildVisitRow(visits[i]),
+                  if (i < visits.length - 1)
+                    const Divider(height: 1, indent: 58, color: AppColors.border),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildVisitRow(AttendanceVisit visit) {
+    final timeFormat = DateFormat('h:mm a');
+    final dateFormat = DateFormat('MMM d');
+
+    final timeInStr = timeFormat.format(visit.timeIn);
+    final dateStr = dateFormat.format(visit.timeIn);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: visit.isActive
+                  ? AppColors.successLight
+                  : AppColors.surface,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              visit.isActive
+                  ? Icons.access_time_rounded
+                  : Icons.check_circle_outline,
+              size: 18,
+              color: visit.isActive ? AppColors.success : AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  visit.isActive ? 'Currently in library' : dateStr,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  visit.isActive
+                      ? 'Since $timeInStr'
+                      : '${visit.timeOut != null ? timeFormat.format(visit.timeOut!) : ''}  ·  ${visit.durationText}',
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (!visit.isActive && visit.timeOut != null)
+            Text(
+              timeFormat.format(visit.timeOut!),
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 12,
+              ),
+            ),
         ],
       ),
     );
