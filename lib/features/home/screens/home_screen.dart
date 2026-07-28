@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../models/book.dart';
 import '../../../models/borrowed_book.dart';
 import '../../../services/catalog_service.dart';
+import '../../../services/user_service.dart';
 import '../../../shared/widgets/section_title.dart';
 import '../../../features/catalog/widgets/book_result_card.dart';
 
@@ -16,9 +17,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _catalogService = CatalogService();
+  final _userService = UserService();
   List<Book> _newArrivals = const [];
   List<BorrowedBook> _currentLoans = const [];
   List<Book> _recommendations = const [];
+  String? _recommendationLabel;
   bool _isLoadingNewArrivals = true;
   bool _isLoadingLoans = true;
   bool _isLoadingRecommendations = true;
@@ -39,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoadingRecommendations = true;
       _newArrivalsError = null;
       _recommendationsError = null;
+      _recommendationLabel = null;
       _loanStatsFailed = false;
     });
 
@@ -49,10 +53,15 @@ class _HomeScreenState extends State<HomeScreen> {
         _newArrivals = overview.newArrivals;
         _currentLoans = overview.activeLoans;
         _recommendations = overview.recommendedBooks;
+        _recommendationLabel = overview.recommendationContext.displayLabel;
         _isLoadingNewArrivals = false;
         _isLoadingLoans = false;
         _isLoadingRecommendations = false;
       });
+
+      if (_recommendationLabel == null) {
+        await _loadRecommendationLabelFallback();
+      }
 
       if (_recommendations.isEmpty && refresh == false) {
         _loadRecommendationsFallback();
@@ -70,9 +79,34 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _loadRecommendationsFallback() async {
+  Future<void> _loadRecommendationLabelFallback() async {
     try {
-      final recommendations = await _catalogService.getRecommendations();
+      final user = await _userService.getCurrentUser();
+      if (!mounted) return;
+
+      final course = user?.course;
+      if (course == null || course.isEmpty) return;
+
+      setState(() {
+        _recommendationLabel ??= course;
+      });
+    } catch (_) {
+      // Keep the generic title when profile is unavailable.
+    }
+  }
+
+  Future<void> _loadRecommendationsFallback({bool refresh = false}) async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingRecommendations = true;
+      _recommendationsError = null;
+    });
+
+    try {
+      final recommendations = await _catalogService.getRecommendations(
+        refresh: refresh,
+      );
       if (!mounted) return;
       setState(() {
         _recommendations = recommendations;
@@ -85,6 +119,14 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoadingRecommendations = false;
       });
     }
+  }
+
+  String get _recommendationsTitle {
+    final label = _recommendationLabel;
+    if (label == null || label.isEmpty) {
+      return 'Recommended for You';
+    }
+    return 'Recommended for $label';
   }
 
   @override
@@ -112,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       _isLoadingRecommendations ||
                       _recommendationsError != null) ...[
                     SectionTitle(
-                      title: 'Recommended for You',
+                      title: _recommendationsTitle,
                       actionLabel: 'View all',
                       onAction: () => context.go('/search'),
                     ),
@@ -194,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
         height: 230,
         child: Center(
           child: TextButton.icon(
-            onPressed: () => _loadRecommendationsFallback(),
+            onPressed: () => _loadRecommendationsFallback(refresh: true),
             icon: const Icon(Icons.refresh_rounded),
             label: Text(_recommendationsError!),
           ),
@@ -203,15 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (_recommendations.isEmpty) {
-      return const SizedBox(
-        height: 230,
-        child: Center(
-          child: Text(
-            'No recommendations yet.',
-            style: TextStyle(color: AppColors.textMuted),
-          ),
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     return SizedBox(

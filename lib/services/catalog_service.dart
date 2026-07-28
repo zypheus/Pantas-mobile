@@ -53,6 +53,9 @@ class CatalogService {
               : const [],
           loanStats: HomeLoanStats.fromJson(loanStats),
           recommendedBooks: recommendedBooks,
+          recommendationContext: RecommendationContext.fromJson(
+            _asMap(data['recommendation_context']),
+          ),
         );
       },
     );
@@ -249,13 +252,47 @@ class HomeOverview {
   final List<BorrowedBook> activeLoans;
   final HomeLoanStats loanStats;
   final List<Book> recommendedBooks;
+  final RecommendationContext recommendationContext;
 
   const HomeOverview({
     required this.newArrivals,
     required this.activeLoans,
     required this.loanStats,
     this.recommendedBooks = const [],
+    this.recommendationContext = const RecommendationContext(),
   });
+}
+
+class RecommendationContext {
+  final String? course;
+  final String? programName;
+
+  const RecommendationContext({
+    this.course,
+    this.programName,
+  });
+
+  factory RecommendationContext.fromJson(Map<String, dynamic> json) {
+    return RecommendationContext(
+      course: _nullableString(json['course']),
+      programName: _nullableString(json['program_name']),
+    );
+  }
+
+  String? get displayLabel {
+    if (programName != null && programName!.isNotEmpty) {
+      return programName;
+    }
+    if (course != null && course!.isNotEmpty) {
+      return course;
+    }
+    return null;
+  }
+}
+
+String? _nullableString(Object? value) {
+  final stringValue = value?.toString();
+  return stringValue == null || stringValue.isEmpty ? null : stringValue;
 }
 
 class HomeLoanStats {
