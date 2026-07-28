@@ -30,31 +30,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<BorrowedBook> _historyBooks = const [];
   int _borrowedTab = 0;
   AttendancePreview? _attendancePreview;
+  String? _attendanceError;
+  bool _isLoadingAttendance = true;
 
   @override
   void initState() {
     super.initState();
-    _loadAll();
+    _loadAll(refresh: true);
   }
 
   Future<void> _loadAll({bool refresh = false}) async {
+    setState(() {
+      _isLoading = true;
+      _attendanceError = null;
+    });
+
     try {
-      final results = await Future.wait([
-        _userService.getCurrentUser(refresh: refresh),
-        _borrowService.getBorrowOverview(refresh: refresh),
-        _attendanceService.getAttendancePreview(),
-      ]);
-      if (mounted) {
-        final borrowOverview = results[1] as BorrowOverview;
-        final attendancePreview = results[2] as AttendancePreview;
-        setState(() {
-          _user = results[0] as User;
-          _currentBooks = borrowOverview.activeLoans;
-          _historyBooks = borrowOverview.history;
-          _attendancePreview = attendancePreview;
-          _isLoading = false;
-        });
-      }
+      final user = await _userService.getCurrentUser(refresh: refresh);
+      final borrowOverview = await _borrowService.getBorrowOverview(
+        refresh: refresh,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _user = user;
+        _currentBooks = borrowOverview.activeLoans;
+        _historyBooks = borrowOverview.history;
+        _isLoading = false;
+      });
     } on ApiException catch (exception) {
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -71,6 +75,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Unable to load profile.')));
+    }
+
+    await _loadAttendance(refresh: true);
+  }
+
+  Future<void> _loadAttendance({bool refresh = true}) async {
+    setState(() {
+      _isLoadingAttendance = true;
+      _attendanceError = null;
+    });
+
+    try {
+      final preview = await _attendanceService.getAttendancePreview(
+        refresh: refresh,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _attendancePreview = preview;
+        _attendanceError = null;
+        _isLoadingAttendance = false;
+      });
+    } on ApiException catch (exception) {
+      if (!mounted) return;
+      setState(() {
+        _attendancePreview = null;
+        _attendanceError = exception.message;
+        _isLoadingAttendance = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _attendancePreview = null;
+        _attendanceError = 'Unable to load library visits.';
+        _isLoadingAttendance = false;
+      });
     }
   }
 
@@ -140,8 +181,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: () => _loadAll(refresh: true),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
           children: [
             _buildHeader(initials),
             Padding(
@@ -178,6 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -406,7 +451,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
         const SizedBox(height: 10),
-        if (visits.isEmpty)
+        if (_isLoadingAttendance)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 28),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Center(
+              child: SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          )
+        else if (_attendanceError != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Text(
+                  _attendanceError!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton.icon(
+                  onPressed: () => _loadAttendance(refresh: true),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          )
+        else if (visits.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 28),
@@ -508,7 +603,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   visit.isActive
                       ? 'Since $timeInStr'
-                      : '${visit.timeOut != null ? timeFormat.format(visit.timeOut!) : ''}  ·  ${visit.durationText}',
+                      : '$timeInStr – ${visit.timeOut != null ? timeFormat.format(visit.timeOut!) : ''}  ·  ${visit.durationText}',
                   style: const TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 12,
@@ -517,12 +612,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          if (!visit.isActive && visit.timeOut != null)
+          if (!visit.isActive)
             Text(
-              timeFormat.format(visit.timeOut!),
+              visit.durationText,
               style: const TextStyle(
                 color: AppColors.textMuted,
                 fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
             ),
         ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../services/user_service.dart';
 
 class FeedbackScreen extends StatefulWidget {
@@ -10,9 +11,18 @@ class FeedbackScreen extends StatefulWidget {
 
 class _FeedbackScreenState extends State<FeedbackScreen> {
   final _userService = UserService();
+  final _formKey = GlobalKey<FormState>();
   final _messageController = TextEditingController();
   String? _selectedCategory;
   bool _isSubmitting = false;
+
+  static const _categories = [
+    'App Issue',
+    'Library Service',
+    'Book Concern',
+    'Room Reservation Concern',
+    'Other',
+  ];
 
   @override
   void dispose() {
@@ -21,12 +31,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Future<void> _submitFeedback() async {
-    if (_selectedCategory == null || _messageController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all fields'),
-        ),
-      );
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
@@ -35,35 +40,41 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     });
 
     try {
-      final success = await _userService.submitFeedback(
+      await _userService.submitFeedback(
         _selectedCategory!,
-        _messageController.text,
+        _messageController.text.trim(),
       );
 
       if (!mounted) return;
 
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Feedback submitted successfully'),
+      FocusScope.of(context).unfocus();
+      _formKey.currentState!.reset();
+      setState(() {
+        _selectedCategory = null;
+      });
+      _messageController.clear();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.white),
+              SizedBox(width: 12),
+              Expanded(child: Text('Feedback submitted successfully')),
+            ],
           ),
-        );
-        Navigator.of(context).pop();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to submit feedback'),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An error occurred'),
-          ),
-        );
-      }
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.validationSummary)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to submit feedback. Please try again.')),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -81,124 +92,141 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Category',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            DropdownButton<String>(
-              isExpanded: true,
-              hint: const Text('Select a category'),
-              value: _selectedCategory,
-              items: [
-                'App Issue',
-                'Library Service',
-                'Book Concern',
-                'Room Reservation Concern',
-                'Other',
-              ]
-                  .map((cat) => DropdownMenuItem(
-                        value: cat,
-                        child: Text(cat),
-                      ))
-                  .toList(),
-              onChanged: _isSubmitting
-                  ? null
-                  : (value) {
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    },
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Message',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _messageController,
-              maxLines: 8,
-              decoration: InputDecoration(
-                hintText: 'Describe your feedback or issue...',
-                border: OutlineInputBorder(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Category',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                key: ValueKey(_selectedCategory),
+                isExpanded: true,
+                decoration: InputDecoration(
+                  hintText: 'Select a category',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                initialValue: _selectedCategory,
+                items: _categories
+                    .map(
+                      (category) => DropdownMenuItem(
+                        value: category,
+                        child: Text(category),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _isSubmitting
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _selectedCategory = value;
+                        });
+                      },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select a category';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Message',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _messageController,
+                maxLines: 8,
+                decoration: InputDecoration(
+                  hintText: 'Describe your feedback or issue...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                enabled: !_isSubmitting,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter your feedback message';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Contact Information',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.email,
+                          color: Colors.blue.shade700,
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'library@university.edu',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.phone,
+                          color: Colors.blue.shade700,
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            '+1 (555) 123-4567',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              enabled: !_isSubmitting,
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submitFeedback,
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Submit Feedback'),
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Contact Information',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.email,
-                        color: Colors.blue.shade700,
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'library@university.edu',
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.phone,
-                        color: Colors.blue.shade700,
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          '+1 (555) 123-4567',
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitFeedback,
-                child: _isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text('Submit Feedback'),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

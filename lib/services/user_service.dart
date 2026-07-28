@@ -52,13 +52,14 @@ class UserService {
     return true;
   }
 
-  Future<bool> submitFeedback(String category, String message) async {
+  Future<void> submitFeedback(String category, String message) async {
     await _apiClient.post(
       '/feedback',
-      body: {'comments': '[$category] $message'},
+      body: {
+        'category': category,
+        'comments': message.trim(),
+      },
     );
-
-    return true;
   }
 
   void setCurrentUser(User user) {

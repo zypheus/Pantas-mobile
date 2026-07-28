@@ -13,15 +13,13 @@ class AttendanceVisit {
 
   factory AttendanceVisit.fromJson(Map<String, dynamic> json) {
     return AttendanceVisit(
-      id: json['id'] is int ? json['id'] : int.parse(json['id'].toString()),
-      timeIn: DateTime.parse(json['time_in'] as String),
+      id: _intValue(json['id']),
+      timeIn: DateTime.parse(json['time_in'].toString()),
       timeOut: json['time_out'] != null
-          ? DateTime.parse(json['time_out'] as String)
+          ? DateTime.parse(json['time_out'].toString())
           : null,
       durationMinutes: json['duration_minutes'] != null
-          ? json['duration_minutes'] is int
-              ? json['duration_minutes']
-              : int.tryParse(json['duration_minutes'].toString())
+          ? _intValue(json['duration_minutes'])
           : null,
     );
   }
@@ -56,17 +54,34 @@ class AttendancePreview {
   });
 
   factory AttendancePreview.fromJson(Map<String, dynamic> json) {
-    final visitsJson = json['recent_visits'] as List<dynamic>? ?? [];
-    final visits = visitsJson
-        .map((v) => AttendanceVisit.fromJson(v as Map<String, dynamic>))
-        .toList();
+    final visitsJson = json['recent_visits'];
+    final visits = <AttendanceVisit>[];
+
+    if (visitsJson is List) {
+      for (final item in visitsJson) {
+        if (item is! Map) continue;
+
+        try {
+          visits.add(
+            AttendanceVisit.fromJson(
+              item.map((key, value) => MapEntry(key.toString(), value)),
+            ),
+          );
+        } catch (_) {
+          // Skip malformed rows instead of failing the whole preview.
+        }
+      }
+    }
 
     return AttendancePreview(
-      recentVisits: visits,
-      monthlyVisitCount:
-          json['monthly_visit_count'] is int
-              ? json['monthly_visit_count']
-              : int.tryParse(json['monthly_visit_count']?.toString() ?? '0') ?? 0,
+      recentVisits: List<AttendanceVisit>.unmodifiable(visits),
+      monthlyVisitCount: _intValue(json['monthly_visit_count']),
     );
   }
+}
+
+int _intValue(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
 }

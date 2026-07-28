@@ -13,6 +13,10 @@ class AttendanceService {
   final MemoryCacheStore _cache = MemoryCacheStore.instance;
 
   Future<AttendancePreview> getAttendancePreview({bool refresh = false}) async {
+    if (refresh) {
+      _cache.remove('mobile:attendance:preview');
+    }
+
     return _cache.getOrFetch<AttendancePreview>(
       'mobile:attendance:preview',
       ttl: const Duration(minutes: 10),
@@ -20,7 +24,14 @@ class AttendanceService {
       fetch: () async {
         final response = await _apiClient.get('/attendance/preview');
         final data = _asMap(response['data']);
-        return AttendancePreview.fromJson(data);
+        final preview = AttendancePreview.fromJson(data);
+
+        // Avoid pinning an empty preview when visit logs were added server-side.
+        if (preview.recentVisits.isEmpty) {
+          _cache.remove('mobile:attendance:preview');
+        }
+
+        return preview;
       },
     );
   }
