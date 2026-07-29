@@ -27,13 +27,19 @@ class IdCardService {
 
   IdCardService._internal();
 
+  static const cacheKey = 'mobile:id-card';
+  static const cacheTtl = Duration(minutes: 30);
+
   final ApiClient _apiClient = ApiClient();
   final MemoryCacheStore _cache = MemoryCacheStore.instance;
 
+  /// Returns a cached ID without hitting the network when still fresh.
+  DigitalIdCard? peekCached() => _cache.get<DigitalIdCard>(cacheKey);
+
   Future<DigitalIdCard> getDigitalId({bool refresh = false}) async {
     return _cache.getOrFetch<DigitalIdCard>(
-      'mobile:id-card',
-      ttl: const Duration(minutes: 5),
+      cacheKey,
+      ttl: cacheTtl,
       refresh: refresh,
       fetch: () async {
         final response = await _apiClient.get('/id-card');
@@ -62,7 +68,7 @@ class IdCardService {
   }
 
   void invalidateCache() {
-    _cache.remove('mobile:id-card');
+    _cache.remove(cacheKey);
   }
 
   Map<String, dynamic> _asMap(Object? value) {

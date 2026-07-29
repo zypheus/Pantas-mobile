@@ -37,10 +37,18 @@ class _DigitalIdScreenState extends State<DigitalIdScreen> {
     super.dispose();
   }
 
-  Future<void> _load({bool refresh = true}) async {
+  Future<void> _load({bool refresh = false}) async {
+    final cached = !refresh ? _idCardService.peekCached() : null;
+
     setState(() {
-      _isLoading = true;
-      _error = null;
+      if (cached != null) {
+        _card = cached;
+        _isLoading = false;
+        _error = null;
+      } else {
+        _isLoading = true;
+        _error = null;
+      }
     });
 
     try {
@@ -49,17 +57,22 @@ class _DigitalIdScreenState extends State<DigitalIdScreen> {
       setState(() {
         _card = card;
         _isLoading = false;
+        _error = null;
       });
     } on ApiException catch (exception) {
       if (!mounted) return;
       setState(() {
-        _error = exception.message;
+        if (_card == null) {
+          _error = exception.message;
+        }
         _isLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Unable to load your digital ID.';
+        if (_card == null) {
+          _error = 'Unable to load your digital ID.';
+        }
         _isLoading = false;
       });
     }
@@ -131,6 +144,11 @@ class _DigitalIdScreenState extends State<DigitalIdScreen> {
           },
         ),
         actions: [
+          IconButton(
+            onPressed: _isLoading ? null : () => _load(refresh: true),
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Regenerate ID',
+          ),
           IconButton(
             onPressed: _isLoading || _card == null || _isSaving
                 ? null

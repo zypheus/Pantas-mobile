@@ -62,6 +62,13 @@ class UserService {
     );
   }
 
+  /// Clears all profile-related memory caches (user, loans, visits, ID card).
+  void invalidateProfileCaches() {
+    _cache.invalidateByPrefix('user:');
+    _cache.invalidateByPrefix('borrow:');
+    _cache.invalidateByPrefix('mobile:');
+  }
+
   void setCurrentUser(User user) {
     _currentUser = user;
     _cache.set<User>('user:profile', user, const Duration(minutes: 5));
@@ -69,7 +76,7 @@ class UserService {
 
   void clearCurrentUser() {
     _currentUser = null;
-    _cache.remove('user:profile');
+    invalidateProfileCaches();
   }
 
   Map<String, dynamic> _asMap(Object? value) {
