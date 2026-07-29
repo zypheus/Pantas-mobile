@@ -49,13 +49,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAll(refresh: true);
+    final cachedUser = _userService.currentUser;
+    if (cachedUser != null) {
+      _user = cachedUser;
+      _isLoading = false;
+    }
+    // Cache-first: reuse profile/borrow/attendance memory cache when available.
+    _loadAll(refresh: false);
   }
 
   Future<void> _loadAll({bool refresh = false}) async {
-    setState(() {
-      _isLoading = true;
-    });
+    final hasCachedProfile = !refresh && _user != null;
+
+    if (!hasCachedProfile) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final user = await _userService.getCurrentUser(refresh: refresh);
@@ -89,13 +99,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ).showSnackBar(const SnackBar(content: Text('Unable to load profile.')));
     }
 
-    await _loadAttendance(refresh: true);
+    await _loadAttendance(refresh: refresh);
   }
 
-  Future<void> _loadAttendance({bool refresh = true}) async {
-    setState(() {
-      _isLoadingAttendance = true;
-    });
+  Future<void> _loadAttendance({bool refresh = false}) async {
+    final hasCachedAttendance = !refresh && _attendancePreview != null;
+
+    if (!hasCachedAttendance) {
+      setState(() {
+        _isLoadingAttendance = true;
+      });
+    }
 
     try {
       final preview = await _attendanceService.getAttendancePreview(
@@ -111,13 +125,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } on ApiException catch (_) {
       if (!mounted) return;
       setState(() {
-        _attendancePreview = null;
         _isLoadingAttendance = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _attendancePreview = null;
         _isLoadingAttendance = false;
       });
     }

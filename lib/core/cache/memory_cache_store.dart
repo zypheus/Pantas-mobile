@@ -18,6 +18,7 @@ class MemoryCacheStore {
   static final MemoryCacheStore instance = MemoryCacheStore._();
 
   final Map<String, MemoryCacheEntry<Object?>> _entries = {};
+  final Map<String, Future<Object?>> _inFlight = {};
 
   T? get<T>(String key, {bool allowExpired = false}) {
     final entry = _entries[key];
@@ -55,21 +56,40 @@ class MemoryCacheStore {
       if (cached != null) return cached;
     }
 
-    final value = await fetch();
-    set<T>(key, value, ttl);
+    final existing = _inFlight[key];
+    if (existing != null) {
+      return await existing as T;
+    }
 
-    return value;
+    final future = () async {
+      final value = await fetch();
+      set<T>(key, value, ttl);
+      return value;
+    }();
+
+    _inFlight[key] = future;
+
+    try {
+      return await future;
+    } finally {
+      if (identical(_inFlight[key], future)) {
+        _inFlight.remove(key);
+      }
+    }
   }
 
   void remove(String key) {
     _entries.remove(key);
+    _inFlight.remove(key);
   }
 
   void clear() {
     _entries.clear();
+    _inFlight.clear();
   }
 
   void invalidateByPrefix(String prefix) {
     _entries.removeWhere((key, _) => key.startsWith(prefix));
+    _inFlight.removeWhere((key, _) => key.startsWith(prefix));
   }
 }

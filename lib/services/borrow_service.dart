@@ -17,7 +17,8 @@ class BorrowService {
   String? lastCheckoutMessage;
   List<String> lastRejectedReasons = const [];
 
-  static const _overviewTtl = Duration(minutes: 1);
+  /// Prefer a longer TTL for ID cards — server-side generation is expensive.
+  static const _overviewTtl = Duration(minutes: 2);
 
   List<String> getBorrowCart() {
     return _borrowCart.map((item) => item.bookId).toList(growable: false);
