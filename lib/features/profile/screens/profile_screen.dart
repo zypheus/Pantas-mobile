@@ -42,6 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   User? _user;
   List<BorrowedBook> _currentBooks = const [];
+  double _outstandingFinesTotal = 0;
   AttendancePreview? _attendancePreview;
   bool _isLoadingAttendance = true;
 
@@ -67,6 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _user = user;
         _currentBooks = borrowOverview.activeLoans;
+        _outstandingFinesTotal = borrowOverview.outstandingFinesTotal;
         _isLoading = false;
       });
     } on ApiException catch (exception) {
@@ -299,6 +301,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
+                if (_outstandingFinesTotal > 0) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Total dues: ${NumberFormat.currency(locale: 'en_PH', symbol: '₱').format(_outstandingFinesTotal)}',
+                    style: GoogleFonts.publicSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _danger,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 if (_currentBooks.isEmpty)
                   Padding(
@@ -338,6 +351,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         final book = _currentBooks[index];
                         final isOverdue = book.isOverdue;
                         final isReturned = book.isReturned;
+                        final currency = NumberFormat.currency(
+                          locale: 'en_PH',
+                          symbol: '₱',
+                        );
 
                         final Color statusColor;
                         final IconData statusIcon;
@@ -398,9 +415,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 style: GoogleFonts.publicSans(
                                   color: isOverdue ? _danger : _slateSoft,
                                   fontSize: 11,
-                                  fontWeight: isOverdue ? FontWeight.w600 : FontWeight.normal,
+                                  fontWeight: isOverdue
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
                                 ),
                               ),
+                              if (book.fine > 0) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Due ${currency.format(book.fine)}',
+                                  style: GoogleFonts.publicSans(
+                                    color: _danger,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                           trailing: Icon(statusIcon, size: 18, color: statusColor),
@@ -509,10 +539,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     PantasProfileTile(
                       icon: Icons.menu_book_rounded,
                       title: 'My books',
-                      subtitle: _currentBooks.isEmpty
-                          ? 'No active loans'
-                          : '${_currentBooks.length} active ${_currentBooks.length == 1 ? 'loan' : 'loans'}',
-                      countBadge: _currentBooks.isNotEmpty ? '${_currentBooks.length}' : null,
+                      subtitle: _myBooksSubtitle(),
+                      countBadge: _currentBooks.isNotEmpty
+                          ? '${_currentBooks.length}'
+                          : null,
                       onTap: _showBooksBottomSheet,
                     ),
 
@@ -685,7 +715,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _user?.year,
     ].where((value) => value != null && value.isNotEmpty).join(' - ');
 
-    return ClipPath(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push('/profile/digital-id'),
+        borderRadius: BorderRadius.circular(4),
+        child: ClipPath(
       clipper: const DieCutCardClipper(cutSize: 24),
       child: Container(
         width: double.infinity,
@@ -734,7 +769,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       Text(
-                        'PANTAS LIBRARY',
+                        'Tap to open',
                         style: GoogleFonts.fraunces(
                           fontStyle: FontStyle.italic,
                           fontWeight: FontWeight.w600,
@@ -799,7 +834,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   
                   // Italic caption
                   Text(
-                    'Scan at the library desk',
+                    'Tap to view & save digital ID',
                     style: GoogleFonts.publicSans(
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
@@ -812,7 +847,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+        ),
+      ),
     );
+  }
+
+  String _myBooksSubtitle() {
+    if (_currentBooks.isEmpty) return 'No active loans';
+
+    final loanLabel =
+        '${_currentBooks.length} active ${_currentBooks.length == 1 ? 'loan' : 'loans'}';
+    if (_outstandingFinesTotal <= 0) return loanLabel;
+
+    final currency = NumberFormat.currency(locale: 'en_PH', symbol: '₱');
+    return '$loanLabel · ${currency.format(_outstandingFinesTotal)} due';
   }
 
   Widget _buildSectionHeader(String title) {

@@ -12,6 +12,7 @@ import '../../features/borrowed_books/screens/borrowed_books_screen.dart';
 import '../../features/rooms/screens/room_reservation_screen.dart';
 import '../../features/rooms/screens/room_reservation_details_screen.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
+import '../../features/profile/screens/digital_id_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/feedback/screens/feedback_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
@@ -95,6 +96,10 @@ class AppRouter {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/profile/digital-id',
+        builder: (context, state) => const DigitalIdScreen(),
       ),
     ],
   );

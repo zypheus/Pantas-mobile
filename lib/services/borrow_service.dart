@@ -99,10 +99,17 @@ class BorrowService {
         final response = await _apiClient.get('/borrow-overview');
         final data = _asMap(response['data']);
 
+        final activeLoans = _borrowedBooksFromList(data['active_loans']);
+        final history = _borrowedBooksFromList(data['history']);
+        final outstandingFromApi = data.containsKey('outstanding_fines_total')
+            ? _doubleValue(data['outstanding_fines_total'])
+            : activeLoans.fold<double>(0, (sum, book) => sum + book.fine);
+
         return BorrowOverview(
-          activeLoans: _borrowedBooksFromList(data['active_loans']),
-          history: _borrowedBooksFromList(data['history']),
+          activeLoans: activeLoans,
+          history: history,
           limits: BorrowLimits.fromJson(_asMap(data['limits'])),
+          outstandingFinesTotal: outstandingFromApi,
         );
       },
     );
@@ -177,11 +184,13 @@ class BorrowOverview {
   final List<BorrowedBook> activeLoans;
   final List<BorrowedBook> history;
   final BorrowLimits limits;
+  final double outstandingFinesTotal;
 
   const BorrowOverview({
     required this.activeLoans,
     required this.history,
     required this.limits,
+    this.outstandingFinesTotal = 0,
   });
 }
 
@@ -268,4 +277,10 @@ bool _boolValue(Object? value) {
   if (value is bool) return value;
   final stringValue = value?.toString().toLowerCase();
   return stringValue == 'true' || stringValue == '1';
+}
+
+double _doubleValue(Object? value) {
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '') ?? 0;
 }

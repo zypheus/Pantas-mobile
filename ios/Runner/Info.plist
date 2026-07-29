@@ -47,6 +47,10 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>PANTAS needs permission to save your digital library ID to Photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PANTAS needs permission to save your digital library ID to Photos.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
