@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/network/api_exception.dart';
 import '../services/user_service.dart';
 
 class FeedbackScreen extends StatefulWidget {
@@ -21,7 +22,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Future<void> _submitFeedback() async {
-    if (_selectedCategory == null || _messageController.text.isEmpty) {
+    if (_selectedCategory == null || _messageController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all fields'),
@@ -35,35 +36,35 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     });
 
     try {
-      final success = await _userService.submitFeedback(
+      await _userService.submitFeedback(
         _selectedCategory!,
-        _messageController.text,
+        _messageController.text.trim(),
       );
 
       if (!mounted) return;
 
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Feedback submitted successfully'),
-          ),
-        );
-        Navigator.of(context).pop();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to submit feedback'),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An error occurred'),
-          ),
-        );
-      }
+      setState(() {
+        _selectedCategory = null;
+      });
+      _messageController.clear();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Feedback submitted successfully'),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.validationSummary)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to submit feedback. Please try again.'),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
