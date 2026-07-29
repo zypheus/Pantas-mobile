@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../models/attendance_visit.dart';
 import '../../../models/borrowed_book.dart';
 import '../../../models/user.dart';
@@ -20,6 +20,21 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  // Design tokens
+  static const Color _ink = Color(0xFF0C1130);
+  static const Color _inkDeep = Color(0xFF070A1F);
+  static const Color _inkSoft = Color(0xFF1B2354);
+  static const Color _gold = Color(0xFFE8AC3E);
+  static const Color _goldSoft = Color(0xFFF6D290);
+  static const Color _parchment = Color(0xFFFBF8F1);
+  static const Color _paper = Color(0xFFF4F1E8);
+  static const Color _cardLine = Color(0xFFE7E1D0);
+  static const Color _slate = Color(0xFF3E4260);
+  static const Color _slateSoft = Color(0xFF8A8CA3);
+  static const Color _activeGreen = Color(0xFF2FBF83);
+  static const Color _activeGreenBg = Color(0xFFE1F6EC);
+  static const Color _danger = Color(0xFFD9534F);
+
   final _userService = UserService();
   final _authService = AuthService();
   final _borrowService = BorrowService();
@@ -27,10 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   User? _user;
   List<BorrowedBook> _currentBooks = const [];
-  List<BorrowedBook> _historyBooks = const [];
-  int _borrowedTab = 0;
   AttendancePreview? _attendancePreview;
-  String? _attendanceError;
   bool _isLoadingAttendance = true;
 
   @override
@@ -42,7 +54,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadAll({bool refresh = false}) async {
     setState(() {
       _isLoading = true;
-      _attendanceError = null;
     });
 
     try {
@@ -56,7 +67,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _user = user;
         _currentBooks = borrowOverview.activeLoans;
-        _historyBooks = borrowOverview.history;
         _isLoading = false;
       });
     } on ApiException catch (exception) {
@@ -83,7 +93,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadAttendance({bool refresh = true}) async {
     setState(() {
       _isLoadingAttendance = true;
-      _attendanceError = null;
     });
 
     try {
@@ -95,21 +104,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       setState(() {
         _attendancePreview = preview;
-        _attendanceError = null;
         _isLoadingAttendance = false;
       });
-    } on ApiException catch (exception) {
+    } on ApiException catch (_) {
       if (!mounted) return;
       setState(() {
         _attendancePreview = null;
-        _attendanceError = exception.message;
         _isLoadingAttendance = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _attendancePreview = null;
-        _attendanceError = 'Unable to load library visits.';
         _isLoadingAttendance = false;
       });
     }
@@ -129,10 +135,292 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _showVisitsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _parchment,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        final visits = _attendancePreview?.recentVisits ?? const [];
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Recent visits',
+                      style: GoogleFonts.fraunces(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _ink,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: _slate),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (visits.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.meeting_room_outlined,
+                            size: 48,
+                            color: _slateSoft,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No visits recorded yet. Your library check-ins will appear here once you scan your card at the desk.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.publicSans(
+                              color: _slateSoft,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: visits.length,
+                      separatorBuilder: (context, index) => const Divider(
+                        color: _cardLine,
+                        height: 1,
+                      ),
+                      itemBuilder: (context, index) {
+                        final visit = visits[index];
+                        final timeFormat = DateFormat('h:mm a');
+                        final dateFormat = DateFormat('MMM d, yyyy');
+                        final timeInStr = timeFormat.format(visit.timeIn);
+                        final dateStr = dateFormat.format(visit.timeIn);
+
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                          leading: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: visit.isActive ? _activeGreenBg : _paper,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              visit.isActive
+                                  ? Icons.access_time_rounded
+                                  : Icons.check_circle_outline_rounded,
+                              size: 18,
+                              color: visit.isActive ? _activeGreen : _slate,
+                            ),
+                          ),
+                          title: Text(
+                            visit.isActive ? 'Currently in library' : dateStr,
+                            style: GoogleFonts.publicSans(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: _ink,
+                            ),
+                          ),
+                          subtitle: Text(
+                            visit.isActive
+                                ? 'Since $timeInStr'
+                                : '$timeInStr – ${visit.timeOut != null ? timeFormat.format(visit.timeOut!) : ''}',
+                            style: GoogleFonts.publicSans(
+                              color: _slateSoft,
+                              fontSize: 12,
+                            ),
+                          ),
+                          trailing: !visit.isActive
+                              ? Text(
+                                  visit.durationText,
+                                  style: GoogleFonts.publicSans(
+                                    color: _slateSoft,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                )
+                              : null,
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showBooksBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _parchment,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        final dateFormat = DateFormat('MMM d, yyyy');
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'My books',
+                      style: GoogleFonts.fraunces(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _ink,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: _slate),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (_currentBooks.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.library_books_outlined,
+                            size: 48,
+                            color: _slateSoft,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No active loans. Books you borrow from the library will appear here.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.publicSans(
+                              color: _slateSoft,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: _currentBooks.length,
+                      separatorBuilder: (context, index) => const Divider(
+                        color: _cardLine,
+                        height: 1,
+                      ),
+                      itemBuilder: (context, index) {
+                        final book = _currentBooks[index];
+                        final isOverdue = book.isOverdue;
+                        final isReturned = book.isReturned;
+
+                        final Color statusColor;
+                        final IconData statusIcon;
+
+                        if (isReturned) {
+                          statusColor = _activeGreen;
+                          statusIcon = Icons.check_circle_rounded;
+                        } else if (isOverdue) {
+                          statusColor = _danger;
+                          statusIcon = Icons.warning_rounded;
+                        } else {
+                          statusColor = _gold;
+                          statusIcon = Icons.schedule_rounded;
+                        }
+
+                        final dateLabel = isReturned && book.returnedDate != null
+                            ? 'Returned ${dateFormat.format(book.returnedDate!)}'
+                            : 'Due ${dateFormat.format(book.dueDate)}';
+
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                          leading: Container(
+                            width: 36,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: _paper,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.menu_book_rounded,
+                              color: _ink,
+                              size: 18,
+                            ),
+                          ),
+                          title: Text(
+                            book.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.publicSans(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: _ink,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                book.author,
+                                style: GoogleFonts.publicSans(
+                                  color: _slateSoft,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                dateLabel,
+                                style: GoogleFonts.publicSans(
+                                  color: isOverdue ? _danger : _slateSoft,
+                                  fontSize: 11,
+                                  fontWeight: isOverdue ? FontWeight.w600 : FontWeight.normal,
+                                ),
+                              ),
+                            ],
+                          ),
+                          trailing: Icon(statusIcon, size: 18, color: statusColor),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
+        backgroundColor: _paper,
         body: SkeletonPage(
           children: [
             SkeletonCard(
@@ -180,49 +468,83 @@ class _ProfileScreenState extends State<ProfileScreen> {
         .join();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: _paper,
       body: RefreshIndicator(
         onRefresh: () => _loadAll(refresh: true),
+        color: _gold,
+        backgroundColor: Colors.white,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
-          children: [
-            _buildHeader(initials),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildQrCard(),
-                  const SizedBox(height: 24),
-                  _buildAttendanceSection(),
-                  const SizedBox(height: 24),
-                  _buildBorrowedSection(),
-                  const SizedBox(height: 24),
-                  _buildSection('Account', [
-                    _ProfileTile(
+            children: [
+              _buildHeader(initials),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLibraryIdCard(),
+                    const SizedBox(height: 32),
+                    
+                    // Eyebrow section header
+                    _buildSectionHeader('LIBRARY'),
+                    const SizedBox(height: 10),
+                    
+                    // Recent Visits tile
+                    PantasProfileTile(
+                      icon: Icons.history_rounded,
+                      title: 'Recent visits',
+                      subtitle: _isLoadingAttendance
+                          ? 'Loading visits...'
+                          : (_attendancePreview?.recentVisits.isEmpty == true
+                              ? 'No visits recorded yet'
+                              : 'View library visit logs'),
+                      countBadge: _attendancePreview != null && _attendancePreview!.monthlyVisitCount > 0
+                          ? '${_attendancePreview!.monthlyVisitCount}'
+                          : null,
+                      onTap: _showVisitsBottomSheet,
+                    ),
+
+                    // My Books tile
+                    PantasProfileTile(
+                      icon: Icons.menu_book_rounded,
+                      title: 'My books',
+                      subtitle: _currentBooks.isEmpty
+                          ? 'No active loans'
+                          : '${_currentBooks.length} active ${_currentBooks.length == 1 ? 'loan' : 'loans'}',
+                      countBadge: _currentBooks.isNotEmpty ? '${_currentBooks.length}' : null,
+                      onTap: _showBooksBottomSheet,
+                    ),
+
+                    const SizedBox(height: 20),
+                    _buildSectionHeader('ACCOUNT'),
+                    const SizedBox(height: 10),
+                    PantasProfileTile(
                       icon: Icons.edit_rounded,
-                      label: 'Edit Profile',
+                      title: 'Edit profile',
+                      subtitle: 'Update your personal details',
                       onTap: () {},
                     ),
-                  ]),
-                  const SizedBox(height: 16),
-                  _buildSection('Preferences', [
-                    _ProfileTile(
+
+                    const SizedBox(height: 20),
+                    _buildSectionHeader('PREFERENCES'),
+                    const SizedBox(height: 10),
+                    PantasProfileTile(
                       icon: Icons.notifications_outlined,
-                      label: 'Notification Settings',
+                      title: 'Notification settings',
+                      subtitle: 'Manage your notification channels',
                       onTap: () => context.go('/settings'),
                     ),
-                  ]),
-                  const SizedBox(height: 28),
-                  _buildLogoutButton(),
-                  const SizedBox(height: 8),
-                ],
+
+                    const SizedBox(height: 36),
+                    _buildSignOutButton(),
+                    const SizedBox(height: 48),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -230,86 +552,121 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildHeader(String initials) {
     final userName = _user?.name.isNotEmpty == true ? _user!.name : 'User';
     final email = _user?.email ?? '';
-    final status = _user?.accountStatus ?? 'Active';
 
     return Container(
-      decoration: const BoxDecoration(gradient: AppColors.heroGradient),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [_inkSoft, _inkDeep],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(36),
+          bottomRight: Radius.circular(36),
+        ),
+      ),
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
           child: Column(
             children: [
+              // Title and Active status badge row
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Profile',
-                    style: TextStyle(
+                    style: GoogleFonts.fraunces(
                       color: Colors.white,
                       fontSize: 24,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.successLight,
+                      color: _activeGreenBg,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
-                      status,
-                      style: const TextStyle(
-                        color: AppColors.success,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: _activeGreen,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Active',
+                          style: GoogleFonts.publicSans(
+                            color: _activeGreen,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
+              
+              // Avatar circle with gold gradient
               Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  gradient: AppColors.accentGradient,
+                width: 84,
+                height: 84,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [_goldSoft, _gold],
+                  ),
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accent.withValues(alpha: 0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
                 ),
                 child: Center(
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 26,
+                  child: Container(
+                    width: 78,
+                    height: 78,
+                    decoration: const BoxDecoration(
+                      color: _inkDeep,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        initials,
+                        style: GoogleFonts.fraunces(
+                          color: _gold,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 26,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
+              
+              // Scholar register serif name
               Text(
                 userName,
-                style: const TextStyle(
+                style: GoogleFonts.fraunces(
                   color: Colors.white,
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 email,
-                style: TextStyle(
+                style: GoogleFonts.publicSans(
                   color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 13,
                 ),
@@ -321,556 +678,174 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildQrCard() {
-    final studentNumber =
-        _user?.studentNumber ?? _user?.studentId ?? 'Not linked';
+  Widget _buildLibraryIdCard() {
+    final studentNumber = _user?.studentNumber ?? _user?.studentId ?? 'Not linked';
     final courseYear = [
       _user?.course,
       _user?.year,
     ].where((value) => value != null && value.isNotEmpty).join(' - ');
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Library ID Card',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'Tap to expand',
-                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: 160,
-            height: 160,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: const Icon(
-              Icons.qr_code_2_rounded,
-              size: 100,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            studentNumber,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (courseYear.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              courseYear,
-              style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-            ),
-          ],
-          const SizedBox(height: 12),
-          const Text(
-            'Scan at the library desk',
-            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAttendanceSection() {
-    final preview = _attendancePreview;
-    final visits = preview?.recentVisits ?? const [];
-    final monthlyCount = preview?.monthlyVisitCount ?? 0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'LIBRARY VISITS',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textMuted,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '$monthlyCount this month',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-          ],
+    return ClipPath(
+      clipper: const DieCutCardClipper(cutSize: 24),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: _parchment,
         ),
-        const SizedBox(height: 10),
-        if (_isLoadingAttendance)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 28),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Center(
-              child: SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-          )
-        else if (_attendanceError != null)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Text(
-                  _attendanceError!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextButton.icon(
-                  onPressed: () => _loadAttendance(refresh: true),
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: const Text('Retry'),
-                ),
-              ],
-            ),
-          )
-        else if (visits.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 28),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                const Icon(
-                  Icons.meeting_room_outlined,
-                  size: 32,
-                  color: AppColors.textMuted,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'No library visits recorded yet',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 13),
-                ),
-              ],
-            ),
-          )
-        else
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                for (int i = 0; i < visits.length; i++) ...[
-                  _buildVisitRow(visits[i]),
-                  if (i < visits.length - 1)
-                    const Divider(height: 1, indent: 58, color: AppColors.border),
-                ],
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildVisitRow(AttendanceVisit visit) {
-    final timeFormat = DateFormat('h:mm a');
-    final dateFormat = DateFormat('MMM d');
-
-    final timeInStr = timeFormat.format(visit.timeIn);
-    final dateStr = dateFormat.format(visit.timeIn);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: visit.isActive
-                  ? AppColors.successLight
-                  : AppColors.surface,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              visit.isActive
-                  ? Icons.access_time_rounded
-                  : Icons.check_circle_outline_rounded,
-              size: 18,
-              color: visit.isActive ? AppColors.success : AppColors.textMuted,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  visit.isActive ? 'Currently in library' : dateStr,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  visit.isActive
-                      ? 'Since $timeInStr'
-                      : '$timeInStr – ${visit.timeOut != null ? timeFormat.format(visit.timeOut!) : ''}  ·  ${visit.durationText}',
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (!visit.isActive)
-            Text(
-              visit.durationText,
-              style: const TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBorrowedSection() {
-    final books = _borrowedTab == 0 ? _currentBooks : _historyBooks;
-    final dateFormat = DateFormat('MMM d, yyyy');
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+        child: Stack(
           children: [
-            const Text(
-              'MY BOOKS',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textMuted,
-                letterSpacing: 0.5,
+            // Hairline border
+            Positioned.fill(
+              child: CustomPaint(
+                painter: DieCutBorderPainter(cutSize: 24, color: _cardLine),
               ),
             ),
-            const Spacer(),
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
+            
+            // 4px gold foil strip along the top
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 4,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [_goldSoft, _gold, _goldSoft],
+                  ),
+                ),
               ),
-              padding: const EdgeInsets.all(2),
-              child: Row(
+            ),
+
+            // Card content
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+              child: Column(
                 children: [
-                  _BorrowTabChip(
-                    label: 'Current',
-                    isSelected: _borrowedTab == 0,
-                    onTap: () => setState(() => _borrowedTab = 0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'LIBRARY ID',
+                        style: GoogleFonts.publicSans(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          letterSpacing: 1.6,
+                          color: _slateSoft,
+                        ),
+                      ),
+                      Text(
+                        'PANTAS LIBRARY',
+                        style: GoogleFonts.fraunces(
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          color: _slate,
+                        ),
+                      ),
+                    ],
                   ),
-                  _BorrowTabChip(
-                    label: 'History',
-                    isSelected: _borrowedTab == 1,
-                    onTap: () => setState(() => _borrowedTab = 1),
+                  const SizedBox(height: 24),
+                  
+                  // Framed QR Code
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _cardLine, width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _slate.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Container(
+                      width: 140,
+                      height: 140,
+                      color: Colors.white,
+                      child: const Icon(
+                        Icons.qr_code_2_rounded,
+                        size: 110,
+                        color: _ink,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  
+                  // Monospaced ID Number
+                  Text(
+                    studentNumber,
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 16,
+                      color: _ink,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  if (courseYear.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      courseYear,
+                      style: GoogleFonts.publicSans(
+                        fontSize: 13,
+                        color: _slate,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  
+                  // Italic caption
+                  Text(
+                    'Scan at the library desk',
+                    style: GoogleFonts.publicSans(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: _slateSoft,
+                    ),
                   ),
                 ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        if (books.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 28),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                const Icon(
-                  Icons.library_books_outlined,
-                  size: 32,
-                  color: AppColors.textMuted,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _borrowedTab == 0
-                      ? 'No active loans'
-                      : 'No borrow history',
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                for (int i = 0; i < books.length; i++) ...[
-                  _buildBorrowedBookRow(books[i], dateFormat),
-                  if (i < books.length - 1)
-                    const Divider(
-                      height: 1,
-                      indent: 70,
-                      color: AppColors.border,
-                    ),
-                ],
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildBorrowedBookRow(BorrowedBook book, DateFormat dateFormat) {
-    final isOverdue = book.isOverdue;
-    final isReturned = book.isReturned;
-
-    final Color statusColor;
-    final IconData statusIcon;
-
-    if (isReturned) {
-      statusColor = AppColors.success;
-      statusIcon = Icons.check_circle_rounded;
-    } else if (isOverdue) {
-      statusColor = AppColors.danger;
-      statusIcon = Icons.warning_rounded;
-    } else {
-      statusColor = AppColors.warning;
-      statusIcon = Icons.schedule_rounded;
-    }
-
-    final dateLabel = isReturned && book.returnedDate != null
-        ? 'Returned ${dateFormat.format(book.returnedDate!)}'
-        : 'Due ${dateFormat.format(book.dueDate)}';
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 52,
-            decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.menu_book_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  book.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  book.author,
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  dateLabel,
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Icon(statusIcon, size: 18, color: statusColor),
-        ],
       ),
     );
   }
 
-  Widget _buildSection(String title, List<Widget> tiles) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textMuted,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              for (int i = 0; i < tiles.length; i++) ...[
-                tiles[i],
-                if (i < tiles.length - 1)
-                  const Divider(height: 1, indent: 58, color: AppColors.border),
-              ],
-            ],
-          ),
-        ),
-      ],
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.publicSans(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.6,
+        color: _slateSoft,
+      ),
     );
   }
 
-  Widget _buildLogoutButton() {
+  Widget _buildSignOutButton() {
     return SizedBox(
       width: double.infinity,
-      height: 50,
+      height: 52,
       child: OutlinedButton.icon(
         onPressed: _logout,
         icon: const Icon(Icons.logout_rounded, size: 18),
-        label: const Text(
-          'Sign Out',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        label: Text(
+          'Sign out',
+          style: GoogleFonts.publicSans(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
         ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.danger,
-          side: BorderSide(color: AppColors.danger.withValues(alpha: 0.5)),
+          foregroundColor: _danger,
+          side: const BorderSide(color: _danger, width: 1.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
       ),
@@ -878,79 +853,144 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-class _BorrowTabChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _BorrowTabChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : AppColors.textMuted,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProfileTile extends StatelessWidget {
+// Reusable list tile pattern
+class PantasProfileTile extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final String title;
+  final String? subtitle;
+  final String? countBadge;
   final VoidCallback onTap;
 
-  const _ProfileTile({
+  const PantasProfileTile({
+    super.key,
     required this.icon,
-    required this.label,
+    required this.title,
+    this.subtitle,
+    this.countBadge,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
-      leading: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, size: 18, color: AppColors.primary),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18), // 18px radius
+        border: Border.all(color: const Color(0xFFE7E1D0), width: 1), // Hairline border
       ),
-      title: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textPrimary,
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4F1E8), // Paper bg
+            borderRadius: BorderRadius.circular(10), // 10px radius
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: const Color(0xFF0C1130), // Ink color
+          ),
         ),
-      ),
-      trailing: const Icon(
-        Icons.chevron_right_rounded,
-        color: AppColors.textMuted,
-        size: 20,
+        title: Text(
+          title,
+          style: GoogleFonts.publicSans(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF3E4260), // Slate
+          ),
+        ),
+        subtitle: subtitle != null
+            ? Text(
+                subtitle!,
+                style: GoogleFonts.publicSans(
+                  fontSize: 12,
+                  color: const Color(0xFF8A8CA3), // Slate soft
+                ),
+              )
+            : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (countBadge != null)
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE1F6EC), // Active green bg
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  countBadge!,
+                  style: GoogleFonts.publicSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2FBF83), // Active green
+                  ),
+                ),
+              ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFF8A8CA3), // Slate soft
+              size: 22,
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+// Die cut clipper for student library ID
+class DieCutCardClipper extends CustomClipper<Path> {
+  final double cutSize;
+  const DieCutCardClipper({this.cutSize = 24.0});
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(0, 0);
+    path.lineTo(size.width - cutSize, 0);
+    path.lineTo(size.width, cutSize);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant DieCutCardClipper oldClipper) => oldClipper.cutSize != cutSize;
+}
+
+// Custom painter for die cut hairline border
+class DieCutBorderPainter extends CustomPainter {
+  final double cutSize;
+  final Color color;
+
+  DieCutBorderPainter({required this.cutSize, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final path = Path();
+    path.moveTo(0, 0);
+    path.lineTo(size.width - cutSize, 0);
+    path.lineTo(size.width, cutSize);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant DieCutBorderPainter oldDelegate) =>
+      oldDelegate.cutSize != cutSize || oldDelegate.color != color;
 }
