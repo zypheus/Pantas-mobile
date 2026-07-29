@@ -30,11 +30,14 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _recommendationsError;
   final _recommendationScrollController = ScrollController();
   int _recommendationCurrentPage = 0;
+  final _newArrivalsScrollController = ScrollController();
+  int _newArrivalsCurrentPage = 0;
 
   @override
   void initState() {
     super.initState();
     _recommendationScrollController.addListener(_onRecommendationScroll);
+    _newArrivalsScrollController.addListener(_onNewArrivalsScroll);
     _loadHomeOverview();
   }
 
@@ -42,17 +45,35 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _recommendationScrollController.removeListener(_onRecommendationScroll);
     _recommendationScrollController.dispose();
+    _newArrivalsScrollController.removeListener(_onNewArrivalsScroll);
+    _newArrivalsScrollController.dispose();
     super.dispose();
   }
 
   void _onRecommendationScroll() {
-    final offset = _recommendationScrollController.offset;
-    const cardWidth = 160.0;
-    const spacing = 14.0;
-    final page = ((offset + spacing / 2) / (cardWidth + spacing)).round();
-    if (page != _recommendationCurrentPage) {
+    if (_recommendations.isEmpty) return;
+    final position = _recommendationScrollController.position;
+    const cardStep = 174.0;
+    final viewportCenter = position.pixels + position.viewportDimension / 2;
+    final index = (viewportCenter / cardStep).round();
+    final clamped = index.clamp(0, _recommendations.length - 1);
+    if (clamped != _recommendationCurrentPage) {
       setState(() {
-        _recommendationCurrentPage = page.clamp(0, _recommendations.length - 1);
+        _recommendationCurrentPage = clamped;
+      });
+    }
+  }
+
+  void _onNewArrivalsScroll() {
+    if (_newArrivals.isEmpty) return;
+    final position = _newArrivalsScrollController.position;
+    const cardStep = 174.0;
+    final viewportCenter = position.pixels + position.viewportDimension / 2;
+    final index = (viewportCenter / cardStep).round();
+    final clamped = index.clamp(0, _newArrivals.length - 1);
+    if (clamped != _newArrivalsCurrentPage) {
+      setState(() {
+        _newArrivalsCurrentPage = clamped;
       });
     }
   }
@@ -232,20 +253,27 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return SizedBox(
-      height: 230,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _newArrivals.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 14),
-        itemBuilder: (context, index) {
-          final book = _newArrivals[index];
-          return BookResultCard(
-            book: book,
-            onTap: () => context.push('/book_details?id=${book.id}'),
-          );
-        },
-      ),
+    return Column(
+      children: [
+        SizedBox(
+          height: 230,
+          child: ListView.separated(
+            controller: _newArrivalsScrollController,
+            scrollDirection: Axis.horizontal,
+            itemCount: _newArrivals.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final book = _newArrivals[index];
+              return BookResultCard(
+                book: book,
+                onTap: () => context.push('/book_details?id=${book.id}'),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildNewArrivalsDots(),
+      ],
     );
   }
 
@@ -296,31 +324,46 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildRecommendationDots() {
-    return Center(
-      child: SizedBox(
-        height: 8,
-        child: ListView.separated(
-          shrinkWrap: true,
-          scrollDirection: Axis.horizontal,
-          itemCount: _recommendations.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 6),
-          itemBuilder: (context, index) {
-            final isActive = index == _recommendationCurrentPage;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              width: isActive ? 24 : 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: isActive
-                    ? const Color(0xFFFFCC00)
-                    : const Color(0xFF0B1740).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            );
-          },
-        ),
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(_recommendations.length, (index) {
+        final isActive = index == _recommendationCurrentPage;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: isActive ? 24 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: isActive
+                ? const Color(0xFFFFCC00)
+                : const Color(0xFF0B1740).withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildNewArrivalsDots() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(_newArrivals.length, (index) {
+        final isActive = index == _newArrivalsCurrentPage;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: isActive ? 24 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: isActive
+                ? const Color(0xFFFFCC00)
+                : const Color(0xFF0B1740).withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
     );
   }
 
