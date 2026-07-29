@@ -28,11 +28,33 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loanStatsFailed = false;
   String? _newArrivalsError;
   String? _recommendationsError;
+  final _recommendationScrollController = ScrollController();
+  int _recommendationCurrentPage = 0;
 
   @override
   void initState() {
     super.initState();
+    _recommendationScrollController.addListener(_onRecommendationScroll);
     _loadHomeOverview();
+  }
+
+  @override
+  void dispose() {
+    _recommendationScrollController.removeListener(_onRecommendationScroll);
+    _recommendationScrollController.dispose();
+    super.dispose();
+  }
+
+  void _onRecommendationScroll() {
+    final offset = _recommendationScrollController.offset;
+    const cardWidth = 160.0;
+    const spacing = 14.0;
+    final page = ((offset + spacing / 2) / (cardWidth + spacing)).round();
+    if (page != _recommendationCurrentPage) {
+      setState(() {
+        _recommendationCurrentPage = page.clamp(0, _recommendations.length - 1);
+      });
+    }
   }
 
   Future<void> _loadHomeOverview({bool refresh = false}) async {
@@ -249,19 +271,55 @@ class _HomeScreenState extends State<HomeScreen> {
       return const SizedBox.shrink();
     }
 
-    return SizedBox(
-      height: 230,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _recommendations.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 14),
-        itemBuilder: (context, index) {
-          final book = _recommendations[index];
-          return BookResultCard(
-            book: book,
-            onTap: () => context.push('/book_details?id=${book.id}'),
-          );
-        },
+    return Column(
+      children: [
+        SizedBox(
+          height: 230,
+          child: ListView.separated(
+            controller: _recommendationScrollController,
+            scrollDirection: Axis.horizontal,
+            itemCount: _recommendations.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
+            itemBuilder: (context, index) {
+              final book = _recommendations[index];
+              return BookResultCard(
+                book: book,
+                onTap: () => context.push('/book_details?id=${book.id}'),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildRecommendationDots(),
+      ],
+    );
+  }
+
+  Widget _buildRecommendationDots() {
+    return Center(
+      child: SizedBox(
+        height: 8,
+        child: ListView.separated(
+          shrinkWrap: true,
+          scrollDirection: Axis.horizontal,
+          itemCount: _recommendations.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 6),
+          itemBuilder: (context, index) {
+            final isActive = index == _recommendationCurrentPage;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              width: isActive ? 24 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? const Color(0xFFFFCC00)
+                    : const Color(0xFF0B1740).withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
