@@ -525,13 +525,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLibraryIdCard(),
-                    const SizedBox(height: 32),
-                    
                     // Eyebrow section header
                     _buildSectionHeader('LIBRARY'),
                     const SizedBox(height: 10),
-                    
+
+                    // Library ID tile
+                    PantasProfileTile(
+                      icon: Icons.badge_rounded,
+                      title: 'Library ID',
+                      subtitle: _user?.studentNumber != null
+                          ? _user!.studentNumber
+                          : _user?.studentId ?? 'Not linked',
+                      onTap: () => context.push('/profile/digital-id'),
+                    ),
+
                     // Recent Visits tile
                     PantasProfileTile(
                       icon: Icons.history_rounded,
@@ -720,149 +727,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildLibraryIdCard() {
-    final studentNumber = _user?.studentNumber ?? _user?.studentId ?? 'Not linked';
-    final courseYear = [
-      _user?.course,
-      _user?.year,
-    ].where((value) => value != null && value.isNotEmpty).join(' - ');
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => context.push('/profile/digital-id'),
-        borderRadius: BorderRadius.circular(4),
-        child: ClipPath(
-      clipper: const DieCutCardClipper(cutSize: 24),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: _parchment,
-        ),
-        child: Stack(
-          children: [
-            // Hairline border
-            Positioned.fill(
-              child: CustomPaint(
-                painter: DieCutBorderPainter(cutSize: 24, color: _cardLine),
-              ),
-            ),
-            
-            // 4px gold foil strip along the top
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 4,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_goldSoft, _gold, _goldSoft],
-                  ),
-                ),
-              ),
-            ),
-
-            // Card content
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'LIBRARY ID',
-                        style: GoogleFonts.publicSans(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                          letterSpacing: 1.6,
-                          color: _slateSoft,
-                        ),
-                      ),
-                      Text(
-                        'Tap to open',
-                        style: GoogleFonts.fraunces(
-                          fontStyle: FontStyle.italic,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                          color: _slate,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Framed QR Code
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _cardLine, width: 1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _slate.withValues(alpha: 0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Container(
-                      width: 140,
-                      height: 140,
-                      color: Colors.white,
-                      child: const Icon(
-                        Icons.qr_code_2_rounded,
-                        size: 110,
-                        color: _ink,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  
-                  // Monospaced ID Number
-                  Text(
-                    studentNumber,
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 16,
-                      color: _ink,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  if (courseYear.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      courseYear,
-                      style: GoogleFonts.publicSans(
-                        fontSize: 13,
-                        color: _slate,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 14),
-                  
-                  // Italic caption
-                  Text(
-                    'Tap to view & save digital ID',
-                    style: GoogleFonts.publicSans(
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                      color: _slateSoft,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-        ),
-      ),
-    );
-  }
 
   String _myBooksSubtitle() {
     if (_currentBooks.isEmpty) return 'No active loans';
@@ -1002,55 +866,4 @@ class PantasProfileTile extends StatelessWidget {
       ),
     );
   }
-}
-
-// Die cut clipper for student library ID
-class DieCutCardClipper extends CustomClipper<Path> {
-  final double cutSize;
-  const DieCutCardClipper({this.cutSize = 24.0});
-
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.moveTo(0, 0);
-    path.lineTo(size.width - cutSize, 0);
-    path.lineTo(size.width, cutSize);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant DieCutCardClipper oldClipper) => oldClipper.cutSize != cutSize;
-}
-
-// Custom painter for die cut hairline border
-class DieCutBorderPainter extends CustomPainter {
-  final double cutSize;
-  final Color color;
-
-  DieCutBorderPainter({required this.cutSize, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    final path = Path();
-    path.moveTo(0, 0);
-    path.lineTo(size.width - cutSize, 0);
-    path.lineTo(size.width, cutSize);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant DieCutBorderPainter oldDelegate) =>
-      oldDelegate.cutSize != cutSize || oldDelegate.color != color;
 }
