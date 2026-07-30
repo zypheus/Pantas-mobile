@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
+import '../../../shared/widgets/pantas_loader.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -136,16 +137,8 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 64),
-                      SizedBox(
-                        width: 26,
-                        height: 26,
-                        child: CircularProgressIndicator(
-                          color: AppColors.accent,
-                          strokeWidth: 2.5,
-                          backgroundColor: Colors.white.withValues(alpha: 0.15),
-                        ),
-                      ),
+                      const SizedBox(height: 48),
+                      const PantasLoader(size: 120),
                     ],
                   ),
                 );

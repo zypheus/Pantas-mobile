@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
+import '../../../shared/widgets/pantas_loader.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -105,6 +106,30 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
+
+          // Full-screen loading overlay with PantasLoader
+          if (_isLoading)
+            Container(
+              color: Colors.black.withValues(alpha: 0.25),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const PantasLoader(size: 160),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Signing in...',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -116,12 +141,12 @@ class _LoginScreenState extends State<LoginScreen> {
         // Logo — colorful circular badge, no extra container needed
         Image.asset(
           'assets/d.png',
-          width: 130,
-          height: 130,
+          width: 100,
+          height: 100,
           fit: BoxFit.contain,
           errorBuilder: (_, _, _) => Container(
-            width: 130,
-            height: 130,
+            width: 100,
+            height: 100,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.13),
               shape: BoxShape.circle,
@@ -274,23 +299,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text(
-                      'Sign In',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+              child: const Text(
+                'Sign In',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 20),
