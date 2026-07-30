@@ -1,3 +1,4 @@
+import 'dart:io';
 import '../models/user.dart';
 import '../core/cache/memory_cache_store.dart';
 import '../core/network/api_client.dart';
@@ -50,6 +51,34 @@ class UserService {
     ApiClient.clearResponseCache();
 
     return true;
+  }
+
+  Future<User> updateProfile(Map<String, dynamic> profileData) async {
+    final response = await _apiClient.post(
+      '/profile/update',
+      body: profileData,
+    );
+
+    final user = User.fromApiJson(_asMap(response['data']));
+    setCurrentUser(user);
+    return user;
+  }
+
+  Future<void> updateProfilePicture(File imageFile, String reason) async {
+    await _apiClient.postMultipart(
+      '/profile/update-picture',
+      fields: {
+        'change_reason': reason,
+      },
+      files: [
+        FileUpload(
+          field: 'profile_picture',
+          path: imageFile.path,
+          filename: imageFile.path.split(Platform.pathSeparator).last,
+        ),
+      ],
+    );
+    invalidateProfileCaches();
   }
 
   Future<void> submitFeedback(String category, String message) async {

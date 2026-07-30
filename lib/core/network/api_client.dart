@@ -85,6 +85,43 @@ class ApiClient {
     return _decodeResponse(response);
   }
 
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    required Map<String, String> fields,
+    List<FileUpload>? files,
+    bool authenticated = true,
+  }) async {
+    final uri = _uri(path);
+    final request = http.MultipartRequest('POST', uri);
+
+    // Add auth header
+    if (authenticated) {
+      final token = await _tokenStorage.readToken();
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+    }
+    request.headers['Accept'] = 'application/json';
+    request.headers['ngrok-skip-browser-warning'] = 'true';
+
+    // Add text fields
+    request.fields.addAll(fields);
+
+    // Add files
+    if (files != null) {
+      for (final file in files) {
+        request.files.add(
+          await http.MultipartFile.fromPath(file.field, file.path,
+              filename: file.filename),
+        );
+      }
+    }
+
+    final streamedResponse = await _httpClient.send(request);
+    final response = await http.Response.fromStream(streamedResponse);
+    return _decodeResponse(response);
+  }
+
   Future<Map<String, dynamic>> delete(
     String path, {
     bool authenticated = true,
@@ -195,6 +232,18 @@ class ApiClient {
       headers['Authorization'] ?? 'guest',
     ].join('|');
   }
+}
+
+class FileUpload {
+  final String field;
+  final String path;
+  final String filename;
+
+  const FileUpload({
+    required this.field,
+    required this.path,
+    required this.filename,
+  });
 }
 
 class _CachedApiResponse {

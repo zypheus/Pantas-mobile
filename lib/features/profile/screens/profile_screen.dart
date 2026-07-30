@@ -572,7 +572,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.edit_rounded,
                       title: 'Edit profile',
                       subtitle: 'Update your personal details',
-                      onTap: () {},
+                      onTap: () => context.push('/profile/edit'),
                     ),
 
                     const SizedBox(height: 20),
