@@ -925,6 +925,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
     // then let the student choose the exact copy to add.
     final shouldSelectCopy = await _confirmCopySelection();
     if (shouldSelectCopy != true) return;
+    if (!mounted) return;
 
     final selected = await CopySelectionDialog.show(
       context,
