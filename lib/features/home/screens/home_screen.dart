@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../models/book.dart';
 import '../../../models/borrowed_book.dart';
 import '../../../services/catalog_service.dart';
+import '../../../services/notification_service.dart';
 import '../../../services/user_service.dart';
 import '../../../shared/widgets/section_title.dart';
 import '../../../features/catalog/widgets/book_result_card.dart';
@@ -18,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _catalogService = CatalogService();
   final _userService = UserService();
+  final _notificationService = NotificationService();
   List<Book> _newArrivals = const [];
   List<BorrowedBook> _currentLoans = const [];
   List<Book> _recommendations = const [];
@@ -28,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loanStatsFailed = false;
   String? _newArrivalsError;
   String? _recommendationsError;
+  int _unreadNotificationCount = 0;
   final _recommendationScrollController = ScrollController();
   int _recommendationCurrentPage = 0;
   final _newArrivalsScrollController = ScrollController();
@@ -88,6 +91,17 @@ class _HomeScreenState extends State<HomeScreen> {
       _recommendationLabel = null;
       _loanStatsFailed = false;
     });
+
+    // Load unread notification count in parallel — non-blocking.
+    _notificationService
+        .getUnreadCount(refresh: refresh)
+        .then((count) {
+          if (!mounted) return;
+          setState(() => _unreadNotificationCount = count);
+        })
+        .catchError((_) {
+          // Silently ignore; badge simply won't update.
+        });
 
     try {
       final overview = await _catalogService.getHomeOverview(refresh: refresh);
@@ -665,6 +679,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNotificationBell(BuildContext context) {
+    final hasUnread = _unreadNotificationCount > 0;
+    final badgeLabel = _unreadNotificationCount > 9
+        ? '9+'
+        : '$_unreadNotificationCount';
+
     return GestureDetector(
       onTap: () => GoRouter.of(context).go('/notifications'),
       child: SizedBox(
@@ -690,28 +709,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 size: 22,
               ),
             ),
-            Positioned(
-              top: -2,
-              right: 2,
-              child: Container(
-                width: 18,
-                height: 18,
-                decoration: const BoxDecoration(
-                  color: AppColors.danger,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Text(
-                    '3',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
+            if (hasUnread)
+              Positioned(
+                top: -2,
+                right: 2,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: const BoxDecoration(
+                    color: AppColors.danger,
+                    borderRadius: BorderRadius.all(Radius.circular(9)),
+                  ),
+                  child: Center(
+                    child: Text(
+                      badgeLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),
