@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/book.dart';
+import '../../../models/book_reservation.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../services/borrow_service.dart';
 import '../../../services/catalog_service.dart';
+import '../../../services/reservation_service.dart';
+import '../widgets/copy_selection_dialog.dart';
 
 class BookDetailsScreen extends StatefulWidget {
   final String bookId;
@@ -18,9 +22,13 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
     with SingleTickerProviderStateMixin {
   final _catalogService = CatalogService();
   final _borrowService = BorrowService();
+  final _reservationService = ReservationService();
   late TabController _tabController;
   BookDetails? _details;
+  BookReservation? _activeReservation;
   bool _isLoading = true;
+  bool _isReserving = false;
+  bool _isCancelling = false;
   String? _errorMessage;
 
   @override
@@ -48,8 +56,26 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
         refresh: refresh,
       );
       if (!mounted) return;
+
+      // Check if the student already has an active reservation for this book.
+      // This runs in the background for available books (no reservation needed)
+      // but is awaited for unavailable books so the button state is correct.
+      BookReservation? activeReservation;
+      if (!details.book.isAvailable) {
+        try {
+          activeReservation =
+              await _reservationService.getActiveReservationForBook(
+            widget.bookId,
+          );
+        } catch (_) {
+          // Ignore reservation lookup errors — the cart flow still works.
+        }
+      }
+
+      if (!mounted) return;
       setState(() {
         _details = details;
+        _activeReservation = activeReservation;
         _isLoading = false;
       });
     } catch (_) {
@@ -323,66 +349,11 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
           else
             _buildHoldingsTable(copies),
           const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: _details!.book.isAvailable
-                        ? _addBookToCart
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    icon: const Icon(
-                      Icons.shopping_cart_outlined,
-                      size: 18,
-                      color: Colors.white,
-                    ),
-                    label: const Text(
-                      'Add to Borrow Cart',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons.bookmark_border_rounded,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _buildActionButtons(),
+          if (_activeReservation != null) ...[
+            const SizedBox(height: 16),
+            _buildReservationStatusCard(),
+          ],
         ],
       ),
     );
@@ -690,9 +661,385 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
     );
   }
 
-  void _addBookToCart() {
-    _borrowService.addBookToBorrowCart(_details!.book);
-    _showAddToCartMessage();
+  /// Builds the primary action button(s) based on availability:
+  /// - **Available copies > 0**: "Add to Borrow Cart" button
+  /// - **No available copies**: "Reserve" button (or "Cancel reservation"
+  ///   if the student already has an active reservation)
+  Widget _buildActionButtons() {
+    final book = _details!.book;
+    final copies = _details!.copies;
+    final availableCopies =
+        copies.where((copy) => copy.isAvailable).toList(growable: false);
+
+    return Row(
+      children: [
+        Expanded(
+          child: _buildPrimaryActionButton(book, availableCopies),
+        ),
+        const SizedBox(width: 12),
+        Container(
+          height: 50,
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: IconButton(
+            onPressed: () => context.go('/book_reservations'),
+            tooltip: 'My reservations',
+            icon: const Icon(
+              Icons.bookmark_border_rounded,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The primary action button — changes label/icon/onPressed based on the
+  /// three-branch Add-to-Cart logic.
+  Widget _buildPrimaryActionButton(
+    Book book,
+    List<BookCopy> availableCopies,
+  ) {
+    // Branch 3: No available copies → Reserve (or Cancel reservation)
+    if (!book.isAvailable || availableCopies.isEmpty) {
+      if (_activeReservation != null) {
+        return _buildCancelButton();
+      }
+      return _buildReserveButton();
+    }
+
+    // Branch 1 & 2: Available copies → Add to Borrow Cart
+    return _buildAddToCartButton();
+  }
+
+  Widget _buildAddToCartButton() {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        gradient: AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ElevatedButton.icon(
+        onPressed: _handleAddToCart,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        icon: const Icon(
+          Icons.shopping_cart_outlined,
+          size: 18,
+          color: Colors.white,
+        ),
+        label: const Text(
+          'Add to Borrow Cart',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReserveButton() {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        gradient: AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ElevatedButton.icon(
+        onPressed: _isReserving ? null : _reserveBook,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        icon: _isReserving
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(
+                Icons.notification_add_rounded,
+                size: 18,
+                color: Colors.white,
+              ),
+        label: Text(
+          _isReserving ? 'Reserving...' : 'Reserve',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCancelButton() {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: AppColors.dangerLight,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+      ),
+      child: ElevatedButton.icon(
+        onPressed: _isCancelling ? null : _cancelReservation,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        icon: _isCancelling
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.danger,
+                ),
+              )
+            : const Icon(
+                Icons.cancel_outlined,
+                size: 18,
+                color: AppColors.danger,
+              ),
+        label: const Text(
+          'Cancel reservation',
+          style: TextStyle(
+            color: AppColors.danger,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Shows the current reservation status (queue position or ready-to-claim).
+  Widget _buildReservationStatusCard() {
+    final reservation = _activeReservation!;
+    final isReady = reservation.isReady;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isReady ? AppColors.successLight : AppColors.warningLight,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isReady
+              ? AppColors.success.withValues(alpha: 0.3)
+              : AppColors.warning.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isReady ? Icons.check_circle_rounded : Icons.hourglass_top_rounded,
+            color: isReady ? AppColors.success : AppColors.warning,
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isReady
+                      ? 'Your reserved book is available!'
+                      : 'You are in the reservation queue',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: isReady ? AppColors.success : AppColors.warning,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isReady
+                      ? 'Please visit the library to claim your copy.'
+                      : 'Position #${reservation.queuePosition} in queue. '
+                          'You will be notified when a copy is returned.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isReady
+                        ? AppColors.success.withValues(alpha: 0.8)
+                        : AppColors.warning.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Core Add-to-Cart logic with three branches:
+  /// 1. Single available copy → add directly, no prompt.
+  /// 2. Multiple available copies → show copy selection dialog.
+  /// 3. No available copies → handled by the Reserve button, not here.
+  Future<void> _handleAddToCart() async {
+    final copies = _details!.copies;
+    final availableCopies =
+        copies.where((copy) => copy.isAvailable).toList(growable: false);
+
+    if (availableCopies.isEmpty) return;
+
+    if (availableCopies.length == 1) {
+      // Branch 1: Only one available copy — add directly without a prompt.
+      _addCopyToCart(availableCopies.first);
+      return;
+    }
+
+    // Branch 2: Multiple available copies — show a confirmation alert first,
+    // then let the student choose the exact copy to add.
+    final shouldSelectCopy = await _confirmCopySelection();
+    if (shouldSelectCopy != true) return;
+    if (!mounted) return;
+
+    final selected = await CopySelectionDialog.show(
+      context,
+      bookTitle: _details!.book.title,
+      copies: copies,
+    );
+
+    if (selected == null) return;
+    if (!mounted) return;
+
+    _addCopyToCart(selected);
+  }
+
+  Future<bool?> _confirmCopySelection() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Choose a copy'),
+          content: const Text(
+            'There are multiple available copies for this book. '
+            'Please select the specific copy you want to add to your borrow cart.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Select copy'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Reserves the book (joins the queue) when no copies are available.
+  Future<void> _reserveBook() async {
+    setState(() => _isReserving = true);
+
+    try {
+      final reservation = await _reservationService.reserveBook(
+        _details!.book.id,
+      );
+      if (!mounted) return;
+
+      setState(() {
+        _activeReservation = reservation;
+        _isReserving = false;
+      });
+
+      _reservationService.refreshNotifications();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _reservationService.lastMessage ??
+                'Book reserved. You are #${reservation.queuePosition} in the queue.',
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _isReserving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.validationSummary)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isReserving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to reserve book.')),
+      );
+    }
+  }
+
+  /// Cancels an active reservation (leaves the queue).
+  Future<void> _cancelReservation() async {
+    final reservation = _activeReservation;
+    if (reservation == null) return;
+
+    setState(() => _isCancelling = true);
+
+    try {
+      await _reservationService.cancelReservation(reservation.id);
+      if (!mounted) return;
+
+      setState(() {
+        _activeReservation = null;
+        _isCancelling = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _reservationService.lastMessage ?? 'Reservation cancelled.',
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _isCancelling = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.validationSummary)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isCancelling = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to cancel reservation.')),
+      );
+    }
   }
 
   void _addCopyToCart(BookCopy copy) {
