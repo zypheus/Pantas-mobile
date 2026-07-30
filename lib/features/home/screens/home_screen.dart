@@ -205,6 +205,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 16),
               _buildStatsRow(),
+              const SizedBox(height: 16),
+              _buildQuickShortcuts(context),
               if (reminder != null) ...[
                 const SizedBox(height: 24),
                 _buildReminderCard(reminder),
@@ -587,6 +589,32 @@ class _HomeScreenState extends State<HomeScreen> {
     return value.toString();
   }
 
+  Widget _buildQuickShortcuts(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _HomeShortcutCard(
+            icon: Icons.bookmark_border_rounded,
+            label: 'My Reservations',
+            subtitle: 'View book holds',
+            color: AppColors.primary,
+            onTap: () => context.push('/book_reservations'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _HomeShortcutCard(
+            icon: Icons.assignment_turned_in_outlined,
+            label: 'Borrow Requests',
+            subtitle: 'Track approvals',
+            color: AppColors.warning,
+            onTap: () => context.push('/borrow_requests'),
+          ),
+        ),
+      ],
+    );
+  }
+
   List<BorrowedBook> get _dueSoonLoans {
     final today = _dateOnly(DateTime.now());
 
@@ -813,6 +841,71 @@ class _LoanReminder {
     required this.textColor,
     required this.messageColor,
   });
+}
+
+class _HomeShortcutCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _HomeShortcutCard({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _StatCard extends StatelessWidget {

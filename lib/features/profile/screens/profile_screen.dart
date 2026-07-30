@@ -565,6 +565,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: _showBooksBottomSheet,
                     ),
 
+                    // My Reservations tile
+                    PantasProfileTile(
+                      icon: Icons.bookmark_border_rounded,
+                      title: 'My reservations',
+                      subtitle: 'View and manage book holds',
+                      onTap: () => context.push('/book_reservations'),
+                    ),
+
                     const SizedBox(height: 20),
                     _buildSectionHeader('ACCOUNT'),
                     const SizedBox(height: 10),
