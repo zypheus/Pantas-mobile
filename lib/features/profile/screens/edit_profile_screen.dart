@@ -193,7 +193,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // Remove empty values
       profileData.removeWhere((key, value) => value.isEmpty);
 
-      await _userService.updateProfile(profileData);
+      final message = await _userService.updateProfile(profileData);
 
       // If profile picture was selected, upload it with reason
       if (_selectedImage != null) {
@@ -206,7 +206,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (!mounted) return;
 
-      _showSnackBar('Profile updated successfully!');
+      _showSnackBar(message);
       context.pop();
     } on ApiException catch (e) {
       if (!mounted) return;

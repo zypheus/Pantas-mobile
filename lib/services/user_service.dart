@@ -53,7 +53,7 @@ class UserService {
     return true;
   }
 
-  Future<User> updateProfile(Map<String, dynamic> profileData) async {
+  Future<String> updateProfile(Map<String, dynamic> profileData) async {
     final response = await _apiClient.post(
       '/profile/update',
       body: profileData,
@@ -61,7 +61,8 @@ class UserService {
 
     final user = User.fromApiJson(_asMap(response['data']));
     setCurrentUser(user);
-    return user;
+
+    return response['message']?.toString() ?? 'Edit request submitted for approval.';
   }
 
   Future<void> updateProfilePicture(File imageFile, String reason) async {
