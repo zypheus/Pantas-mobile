@@ -210,9 +210,16 @@ class _BorrowCartScreenState extends State<BorrowCartScreen> {
                     ),
                     const SizedBox(height: 16),
                     PrimaryButton(
-                      label: _isSubmitting ? 'Submitting...' : 'Submit Request',
+                      label: _isSubmitting
+                          ? 'Submitting...'
+                          : 'Submit for approval',
                       enabled: !_isSubmitting && cartItems.isNotEmpty,
                       onPressed: _submitRequest,
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => context.push('/borrow_requests'),
+                      child: const Text('View my borrow requests'),
                     ),
                   ],
                 ),

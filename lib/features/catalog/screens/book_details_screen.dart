@@ -57,19 +57,15 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
       );
       if (!mounted) return;
 
-      // Check if the student already has an active reservation for this book.
-      // This runs in the background for available books (no reservation needed)
-      // but is awaited for unavailable books so the button state is correct.
+      // Load active reservation so ready holds show desk-claim messaging.
       BookReservation? activeReservation;
-      if (!details.book.isAvailable) {
-        try {
-          activeReservation =
-              await _reservationService.getActiveReservationForBook(
-            widget.bookId,
-          );
-        } catch (_) {
-          // Ignore reservation lookup errors — the cart flow still works.
-        }
+      try {
+        activeReservation =
+            await _reservationService.getActiveReservationForBook(
+          widget.bookId,
+        );
+      } catch (_) {
+        // Ignore reservation lookup errors — the cart flow still works.
       }
 
       if (!mounted) return;
@@ -399,7 +395,8 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
               DataColumn(label: Text('Add to cart')),
             ],
             rows: copies.map((copy) {
-              final isAvailable = copy.isAvailable;
+              final canAddToCart = copy.canAddToCart;
+              final isHeld = copy.isHeld;
               return DataRow(
                 cells: [
                   DataCell(Text(copy.accessionNo)),
@@ -414,14 +411,14 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
                   DataCell(Text(copy.collection)),
                   DataCell(Text(copy.shelvingLocation)),
                   DataCell(Text(copy.circulationType)),
-                  DataCell(_statusCell(copy.circulationStatus, isAvailable)),
+                  DataCell(_statusCell(copy.circulationStatus, canAddToCart, isHeld)),
                   DataCell(Text(copy.barcode)),
                   DataCell(Text(copy.rfid)),
                   DataCell(
                     SizedBox(
                       height: 34,
                       child: ElevatedButton(
-                        onPressed: isAvailable
+                        onPressed: canAddToCart
                             ? () => _addCopyToCart(copy)
                             : null,
                         style: ElevatedButton.styleFrom(
@@ -455,17 +452,31 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
     );
   }
 
-  Widget _statusCell(String label, bool isAvailable) {
+  Widget _statusCell(String label, bool canAddToCart, bool isHeld) {
+    final Color backgroundColor;
+    final Color textColor;
+
+    if (canAddToCart) {
+      backgroundColor = AppColors.successLight;
+      textColor = AppColors.success;
+    } else if (isHeld) {
+      backgroundColor = AppColors.warningLight;
+      textColor = AppColors.warning;
+    } else {
+      backgroundColor = AppColors.dangerLight;
+      textColor = AppColors.danger;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isAvailable ? AppColors.successLight : AppColors.dangerLight,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: isAvailable ? AppColors.success : AppColors.danger,
+          color: textColor,
           fontWeight: FontWeight.w600,
           fontSize: 11,
         ),
@@ -704,8 +715,11 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
     List<BookCopy> availableCopies,
   ) {
     // Branch 3: No available copies → Reserve (or Cancel reservation)
-    if (!book.isAvailable || availableCopies.isEmpty) {
+    if (availableCopies.isEmpty) {
       if (_activeReservation != null) {
+        if (_activeReservation!.isReady) {
+          return _buildDeskClaimBanner();
+        }
         return _buildCancelButton();
       }
       return _buildReserveButton();
@@ -844,6 +858,40 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
     );
   }
 
+  Widget _buildDeskClaimBanner() {
+    final reservation = _activeReservation!;
+    final heldLabel = reservation.heldCallNumber != null &&
+            reservation.heldCallNumber!.isNotEmpty
+        ? ' copy ${reservation.heldCallNumber}'
+        : '';
+
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.successLight,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.storefront_rounded, color: AppColors.success, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Visit the library desk to claim$heldLabel',
+              style: const TextStyle(
+                color: AppColors.success,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Shows the current reservation status (queue position or ready-to-claim).
   Widget _buildReservationStatusCard() {
     final reservation = _activeReservation!;
@@ -886,7 +934,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
                 const SizedBox(height: 4),
                 Text(
                   isReady
-                      ? 'Please visit the library to claim your copy.'
+                      ? 'Please visit the library desk to claim your held copy.'
                       : 'Position #${reservation.queuePosition} in queue. '
                           'You will be notified when a copy is returned.',
                   style: TextStyle(
@@ -896,6 +944,19 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
                         : AppColors.warning.withValues(alpha: 0.8),
                   ),
                 ),
+                if (isReady &&
+                    reservation.heldCallNumber != null &&
+                    reservation.heldCallNumber!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Held copy: ${reservation.heldCallNumber}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontFamily: 'monospace',
+                      color: AppColors.success.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

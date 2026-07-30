@@ -13,7 +13,10 @@ class BookReservation {
   final DateTime reservedAt;
   final DateTime? availableAt;
   final DateTime? expiresAt;
+  final DateTime? fulfilledAt;
   final DateTime? cancelledAt;
+  final String? heldCallNumber;
+  final String? heldAccessionNo;
 
   const BookReservation({
     required this.id,
@@ -27,7 +30,10 @@ class BookReservation {
     required this.reservedAt,
     this.availableAt,
     this.expiresAt,
+    this.fulfilledAt,
     this.cancelledAt,
+    this.heldCallNumber,
+    this.heldAccessionNo,
   });
 
   /// Status values returned by the API.
@@ -68,6 +74,8 @@ class BookReservation {
     final bookGroup = _asMap(book['group']);
     final bookDescription = _asMap(book['description']);
 
+    final heldCopy = _asMap(json['held_copy']);
+
     return BookReservation(
       id: _stringValue(json['id']),
       bookId: _stringValue(book['id'], fallback: _stringValue(json['book_id'])),
@@ -97,7 +105,10 @@ class BookReservation {
       reservedAt: _dateValue(json['reserved_at'] ?? json['created_at']),
       availableAt: _nullableDate(json['available_at']),
       expiresAt: _nullableDate(json['expires_at'] ?? json['hold_expires_at']),
+      fulfilledAt: _nullableDate(json['fulfilled_at']),
       cancelledAt: _nullableDate(json['cancelled_at']),
+      heldCallNumber: _nullableString(heldCopy['call_number']),
+      heldAccessionNo: _nullableString(heldCopy['accession_no']),
     );
   }
 }

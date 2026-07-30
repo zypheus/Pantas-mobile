@@ -260,6 +260,8 @@ class BookCopy {
   final String circulationType;
   final String circulationStatus;
   final String availability;
+  final bool isHeld;
+  final bool canAddToCart;
   final String barcode;
   final String rfid;
 
@@ -273,13 +275,19 @@ class BookCopy {
     required this.circulationType,
     required this.circulationStatus,
     required this.availability,
+    this.isHeld = false,
+    this.canAddToCart = false,
     required this.barcode,
     required this.rfid,
   });
 
-  bool get isAvailable => availability.toLowerCase() == 'available';
+  bool get isAvailable => canAddToCart;
 
   factory BookCopy.fromJson(Map<String, dynamic> json) {
+    final availability = _stringValue(json['availability']);
+    final canAddToCart = json['can_add_to_cart'] == true ||
+        availability.toLowerCase() == 'available';
+
     return BookCopy(
       id: _stringValue(json['id']),
       accessionNo: _stringValue(json['accession_no']),
@@ -289,7 +297,10 @@ class BookCopy {
       shelvingLocation: _stringValue(json['shelving_location']),
       circulationType: _stringValue(json['circulation_type']),
       circulationStatus: _stringValue(json['circulation_status']),
-      availability: _stringValue(json['availability']),
+      availability: availability,
+      isHeld: json['is_held'] == true ||
+          availability.toLowerCase() == 'on hold',
+      canAddToCart: canAddToCart,
       barcode: _stringValue(json['barcode']),
       rfid: _stringValue(json['rfid']),
     );

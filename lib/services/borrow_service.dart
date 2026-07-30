@@ -116,6 +116,30 @@ class BorrowService {
     );
   }
 
+  Future<List<BorrowRequestSummary>> getBorrowRequests({
+    bool refresh = false,
+  }) async {
+    return _cache.getOrFetch<List<BorrowRequestSummary>>(
+      'borrow:requests',
+      ttl: _overviewTtl,
+      refresh: refresh,
+      fetch: () async {
+        final response = await _apiClient.get('/borrow-requests');
+        final data = response['data'];
+        if (data is! List) return const [];
+
+        return data
+            .map((item) => BorrowRequestSummary.fromJson(_asMap(item)))
+            .toList(growable: false);
+      },
+    );
+  }
+
+  Future<void> cancelBorrowRequest(String requestId) async {
+    await _apiClient.delete('/borrow-requests/$requestId');
+    invalidateBorrowCaches();
+  }
+
   Future<bool> submitCheckoutRequest(List<String> bookIds) async {
     final response = await _apiClient.post(
       '/borrow-cart/submit',
@@ -178,6 +202,81 @@ class BorrowService {
   void invalidateBorrowCaches() {
     _cache.invalidateByPrefix('borrow:');
     _cache.invalidateByPrefix('mobile:');
+  }
+}
+
+class BorrowRequestSummary {
+  final String id;
+  final String status;
+  final DateTime requestedAt;
+  final DateTime? reviewedAt;
+  final String? staffNote;
+  final List<BorrowRequestItemSummary> items;
+
+  const BorrowRequestSummary({
+    required this.id,
+    required this.status,
+    required this.requestedAt,
+    this.reviewedAt,
+    this.staffNote,
+    required this.items,
+  });
+
+  bool get isPending => status.toLowerCase() == 'pending';
+  bool get isApproved => status.toLowerCase() == 'approved';
+  bool get isRejected => status.toLowerCase() == 'rejected';
+
+  factory BorrowRequestSummary.fromJson(Map<String, dynamic> json) {
+    final items = json['items'];
+    return BorrowRequestSummary(
+      id: json['id']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'pending',
+      requestedAt: DateTime.tryParse(json['requested_at']?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      reviewedAt: DateTime.tryParse(json['reviewed_at']?.toString() ?? ''),
+      staffNote: json['staff_note']?.toString(),
+      items: items is List
+          ? items
+              .map((item) => BorrowRequestItemSummary.fromJson(
+                    item is Map<String, dynamic>
+                        ? item
+                        : Map<String, dynamic>.from(item as Map),
+                  ))
+              .toList(growable: false)
+          : const [],
+    );
+  }
+}
+
+class BorrowRequestItemSummary {
+  final String id;
+  final String bookId;
+  final String status;
+  final String? rejectionReason;
+  final String title;
+  final String author;
+  final String callNumber;
+
+  const BorrowRequestItemSummary({
+    required this.id,
+    required this.bookId,
+    required this.status,
+    this.rejectionReason,
+    required this.title,
+    required this.author,
+    required this.callNumber,
+  });
+
+  factory BorrowRequestItemSummary.fromJson(Map<String, dynamic> json) {
+    return BorrowRequestItemSummary(
+      id: json['id']?.toString() ?? '',
+      bookId: json['book_id']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'pending',
+      rejectionReason: json['rejection_reason']?.toString(),
+      title: json['title']?.toString() ?? 'Untitled',
+      author: json['author']?.toString() ?? 'Unknown author',
+      callNumber: json['call_number']?.toString() ?? '',
+    );
   }
 }
 

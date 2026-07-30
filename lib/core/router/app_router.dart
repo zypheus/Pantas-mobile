@@ -9,6 +9,7 @@ import '../../features/catalog/screens/catalog_search_screen.dart';
 import '../../features/catalog/screens/book_details_screen.dart';
 import '../../features/catalog/screens/book_reservations_screen.dart';
 import '../../features/borrow_cart/screens/borrow_cart_screen.dart';
+import '../../features/borrow_cart/screens/borrow_requests_screen.dart';
 import '../../features/borrowed_books/screens/borrowed_books_screen.dart';
 import '../../features/rooms/screens/room_reservation_screen.dart';
 import '../../features/rooms/screens/room_reservation_details_screen.dart';
@@ -86,6 +87,10 @@ class AppRouter {
       GoRoute(
         path: '/borrow_cart',
         builder: (context, state) => const BorrowCartScreen(),
+      ),
+      GoRoute(
+        path: '/borrow_requests',
+        builder: (context, state) => const BorrowRequestsScreen(),
       ),
       GoRoute(
         path: '/book_reservations',

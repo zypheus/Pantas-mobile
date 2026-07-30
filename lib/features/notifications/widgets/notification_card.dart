@@ -50,6 +50,31 @@ class NotificationCard extends StatelessWidget {
           color: Color(0xFF0EA5E9),
           bgColor: Color(0xFFE0F2FE),
         );
+      case 'book_reservation_pending':
+        return const _NotificationStyle(
+          icon: Icons.queue_rounded,
+          color: Color(0xFF0EA5E9),
+          bgColor: Color(0xFFE0F2FE),
+        );
+      case 'book_reservation_fulfilled':
+        return const _NotificationStyle(
+          icon: Icons.check_circle_rounded,
+          color: AppColors.success,
+          bgColor: AppColors.successLight,
+        );
+      case 'borrow_request_submitted':
+      case 'borrow_request_approved':
+        return const _NotificationStyle(
+          icon: Icons.library_books_rounded,
+          color: AppColors.success,
+          bgColor: AppColors.successLight,
+        );
+      case 'borrow_request_rejected':
+        return const _NotificationStyle(
+          icon: Icons.library_books_outlined,
+          color: AppColors.danger,
+          bgColor: AppColors.dangerLight,
+        );
       case 'book_reservation_ready':
         return const _NotificationStyle(
           icon: Icons.notifications_active_rounded,

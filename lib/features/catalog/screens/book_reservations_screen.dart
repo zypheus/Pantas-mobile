@@ -264,6 +264,57 @@ class _BookReservationsScreenState extends State<BookReservationsScreen> {
   }
 }
 
+/// A live countdown until the hold expires.
+class _HoldExpiryCountdown extends StatefulWidget {
+  final DateTime expiresAt;
+
+  const _HoldExpiryCountdown({required this.expiresAt});
+
+  @override
+  State<_HoldExpiryCountdown> createState() => _HoldExpiryCountdownState();
+}
+
+class _HoldExpiryCountdownState extends State<_HoldExpiryCountdown> {
+  @override
+  void initState() {
+    super.initState();
+    _scheduleTick();
+  }
+
+  void _scheduleTick() {
+    Future<void>.delayed(const Duration(seconds: 30), () {
+      if (!mounted) return;
+      setState(() {});
+      _scheduleTick();
+    });
+  }
+
+  String _formatRemaining() {
+    final remaining = widget.expiresAt.difference(DateTime.now());
+    if (remaining.isNegative) return 'Hold expired';
+
+    final days = remaining.inDays;
+    final hours = remaining.inHours.remainder(24);
+    final minutes = remaining.inMinutes.remainder(60);
+
+    if (days > 0) return '$days d ${hours}h remaining';
+    if (hours > 0) return '${hours}h ${minutes}m remaining';
+    return '${minutes}m remaining';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _formatRemaining(),
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: AppColors.success,
+      ),
+    );
+  }
+}
+
 /// A single reservation card showing book info, queue position, status,
 /// and a cancel button (for active reservations).
 class _ReservationCard extends StatelessWidget {
@@ -400,15 +451,26 @@ class _ReservationCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          reservation.expiresAt != null
-                              ? 'Available now! Claim before ${DateFormat('MMM d, h:mm a').format(reservation.expiresAt!)}'
-                              : 'Available now! Visit the library to claim it.',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.success,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              reservation.expiresAt != null
+                                  ? 'Visit the library desk to claim${reservation.heldCallNumber != null && reservation.heldCallNumber!.isNotEmpty ? ' copy ${reservation.heldCallNumber}' : ''} before ${DateFormat('MMM d, h:mm a').format(reservation.expiresAt!)}.'
+                                  : 'Visit the library desk to claim your held copy.',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (reservation.expiresAt != null) ...[
+                              const SizedBox(height: 4),
+                              _HoldExpiryCountdown(
+                                expiresAt: reservation.expiresAt!,
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ],
