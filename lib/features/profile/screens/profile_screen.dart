@@ -149,6 +149,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _showSettingsSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _parchment,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Settings',
+                      style: GoogleFonts.fraunces(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _ink,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: _slate),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildSettingsTile(
+                  icon: Icons.edit_rounded,
+                  title: 'Edit profile',
+                  subtitle: 'Update your personal details',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/profile/edit');
+                  },
+                ),
+                const SizedBox(height: 8),
+                _buildSettingsTile(
+                  icon: Icons.notifications_outlined,
+                  title: 'Notification settings',
+                  subtitle: 'Manage your notification channels',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.go('/settings');
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _cardLine, width: 1),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: _paper,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 20, color: _ink),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.publicSans(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: _slate,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: GoogleFonts.publicSans(
+            fontSize: 12,
+            color: _slateSoft,
+          ),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: _slateSoft,
+          size: 22,
+        ),
+      ),
+    );
+  }
+
   void _showVisitsBottomSheet() {
     showModalBottomSheet(
       context: context,
@@ -573,26 +681,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: () => context.push('/book_reservations'),
                     ),
 
-                    const SizedBox(height: 20),
-                    _buildSectionHeader('ACCOUNT'),
-                    const SizedBox(height: 10),
-                    PantasProfileTile(
-                      icon: Icons.edit_rounded,
-                      title: 'Edit profile',
-                      subtitle: 'Update your personal details',
-                      onTap: () => context.push('/profile/edit'),
-                    ),
-
-                    const SizedBox(height: 20),
-                    _buildSectionHeader('PREFERENCES'),
-                    const SizedBox(height: 10),
-                    PantasProfileTile(
-                      icon: Icons.notifications_outlined,
-                      title: 'Notification settings',
-                      subtitle: 'Manage your notification channels',
-                      onTap: () => context.go('/settings'),
-                    ),
-
                     const SizedBox(height: 36),
                     _buildSignOutButton(),
                     const SizedBox(height: 48),
@@ -628,7 +716,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
           child: Column(
             children: [
-              // Title and Active status badge row
+              // Title and Settings icon row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -640,36 +728,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _activeGreenBg,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: _activeGreen,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Active',
-                          style: GoogleFonts.publicSans(
-                            color: _activeGreen,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
+                  GestureDetector(
+                    onTap: _showSettingsSheet,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.settings_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
                   ),
                 ],
