@@ -213,9 +213,9 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: 2,
-        mainAxisSpacing: 6,
-        crossAxisSpacing: 6,
-        childAspectRatio: 2.4,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 1.6,
         children: [
           _SummaryCard(label: 'My Subjects', value: _isStatsLoading ? '—' : '$_subjectsCount', icon: Icons.book_rounded),
           _SummaryCard(label: 'My Folders', value: _isStatsLoading ? '—' : '$_foldersCount', icon: Icons.folder_rounded),
@@ -229,32 +229,44 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   Widget _buildQuickActions(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: _ActionTile(
-              label: 'Browse Catalog',
-              icon: Icons.menu_book_rounded,
-              onTap: () => context.go('/faculty/catalog'),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _ActionTile(
-              label: 'Create Folder',
-              icon: Icons.create_new_folder_rounded,
-              onTap: () => context.go('/faculty/create-folder'),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _ActionTile(
-              label: 'Create Room',
-              icon: Icons.group_add_rounded,
-              onTap: () => context.go('/faculty/create-room'),
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 580;
+          final itemWidth = isNarrow
+              ? constraints.maxWidth
+              : (constraints.maxWidth - 24) / 3;
+
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: itemWidth,
+                child: _ActionTile(
+                  label: 'Browse Catalog',
+                  icon: Icons.menu_book_rounded,
+                  onTap: () => context.go('/faculty/catalog'),
+                ),
+              ),
+              SizedBox(
+                width: itemWidth,
+                child: _ActionTile(
+                  label: 'Create Folder',
+                  icon: Icons.create_new_folder_rounded,
+                  onTap: () => context.go('/faculty/create-folder'),
+                ),
+              ),
+              SizedBox(
+                width: itemWidth,
+                child: _ActionTile(
+                  label: 'Create Room',
+                  icon: Icons.group_add_rounded,
+                  onTap: () => context.go('/faculty/create-room'),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -345,11 +357,10 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 84),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(4),
@@ -359,13 +370,14 @@ class _SummaryCard extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: AppColors.primary, size: 18),
-          const SizedBox(height: 6),
-          Text(value, style: AppTextStyles.headingMedium.copyWith(fontSize: 16)),
-          const SizedBox(height: 2),
-          Text(label, style: AppTextStyles.bodySmall.copyWith(fontSize: 10, color: AppColors.textMuted)),
+          const SizedBox(height: 8),
+          Text(value, style: AppTextStyles.headingMedium.copyWith(fontSize: 18)),
+          const SizedBox(height: 4),
+          Text(label, style: AppTextStyles.bodySmall.copyWith(fontSize: 11, color: AppColors.textMuted)),
         ],
       ),
     );
@@ -388,8 +400,8 @@ class _ActionTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 96,
-        padding: const EdgeInsets.all(16),
+        height: 88,
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(20),
@@ -405,20 +417,22 @@ class _ActionTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: AppColors.accent.withAlpha(32),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: AppColors.accent),
+              child: Icon(icon, color: AppColors.accent, size: 20),
             ),
             const Spacer(),
             Text(
               label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
-                fontSize: 12,
+                fontSize: 11,
               ),
             ),
           ],
