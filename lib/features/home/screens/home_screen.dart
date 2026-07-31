@@ -409,19 +409,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         const SizedBox(height: 10),
         SizedBox(
-          height: 220,
+          height: 230,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: books.length,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final book = books[index];
-              return SizedBox(
-                width: 140,
-                child: BookResultCard(
-                  book: book,
-                  onTap: () => context.push('/book_details?id=${book.id}'),
-                ),
+              return BookResultCard(
+                book: book,
+                onTap: () => context.push('/book_details?id=${book.id}'),
               );
             },
           ),
