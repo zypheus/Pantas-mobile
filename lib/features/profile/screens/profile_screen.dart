@@ -633,6 +633,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Stats cards
+                    _buildLoanStatsRow(),
+                    const SizedBox(height: 20),
+                    // Quick shortcut cards
+                    _buildQuickShortcutsRow(),
+                    const SizedBox(height: 20),
                     // Eyebrow section header
                     _buildSectionHeader('LIBRARY'),
                     const SizedBox(height: 10),
@@ -821,6 +827,96 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  List<BorrowedBook> get _dueSoonLoans {
+    final today = _dateOnly(DateTime.now());
+
+    return _currentBooks
+        .where((loan) {
+          if (loan.isOverdue || loan.isReturned) return false;
+          final dueDate = _dateOnly(loan.dueDate);
+          final daysUntilDue = dueDate.difference(today).inDays;
+          return daysUntilDue >= 0 && daysUntilDue <= 3;
+        })
+        .toList(growable: false);
+  }
+
+  List<BorrowedBook> get _overdueLoans {
+    return _currentBooks
+        .where((loan) => loan.isOverdue && !loan.isReturned)
+        .toList(growable: false);
+  }
+
+  DateTime _dateOnly(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  Widget _buildLoanStatsRow() {
+    final dueSoonCount = _dueSoonLoans.length;
+    final overdueCount = _overdueLoans.length;
+    final isLoading = _isLoading;
+
+    String statValue(int value) {
+      if (isLoading) return '--';
+      return value.toString();
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: _ProfileStatCard(
+            value: statValue(_currentBooks.length),
+            label: 'Active Loans',
+            icon: Icons.library_books_rounded,
+            color: _ink,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _ProfileStatCard(
+            value: statValue(dueSoonCount),
+            label: 'Due Soon',
+            icon: Icons.schedule_rounded,
+            color: _gold,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _ProfileStatCard(
+            value: statValue(overdueCount),
+            label: 'Overdue',
+            icon: Icons.warning_amber_rounded,
+            color: _danger,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickShortcutsRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: _ProfileShortcutCard(
+            icon: Icons.bookmark_border_rounded,
+            label: 'My Reservations',
+            subtitle: 'View book holds',
+            color: _ink,
+            onTap: () => context.push('/book_reservations'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _ProfileShortcutCard(
+            icon: Icons.assignment_turned_in_outlined,
+            label: 'Borrow Requests',
+            subtitle: 'Track approvals',
+            color: _gold,
+            onTap: () => context.push('/borrow_requests'),
+          ),
+        ),
+      ],
+    );
+  }
 
   String _myBooksSubtitle() {
     if (_currentBooks.isEmpty) return 'No active loans';
@@ -864,6 +960,128 @@ class _ProfileScreenState extends State<ProfileScreen> {
           side: const BorderSide(color: _danger, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Stat card widget for loan stats
+class _ProfileStatCard extends StatelessWidget {
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _ProfileStatCard({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF8A8CA3),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Shortcut card widget for quick actions
+class _ProfileShortcutCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ProfileShortcutCard({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE7E1D0), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF8A8CA3),
+                ),
+              ),
+            ],
           ),
         ),
       ),
