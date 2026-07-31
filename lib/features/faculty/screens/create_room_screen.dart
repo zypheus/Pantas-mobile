@@ -19,6 +19,8 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   bool _isPrivate = true;
   bool _requiresApproval = false;
   bool _saving = false;
+  // Mode selector: when true we're creating a room, when false we're creating a folder
+  bool _isCreatingRoom = true;
 
   @override
   void dispose() {
@@ -32,9 +34,37 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Room name is required.')),
+        SnackBar(content: Text(_isCreatingRoom ? 'Room name is required.' : 'Folder name is required.')),
       );
       return;
+    }
+
+    // If the user is creating a folder, call the folder creation service.
+    if (!_isCreatingRoom) {
+      setState(() => _saving = true);
+      try {
+        final folder = await _service.createFolder(
+          name: name,
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Folder created.')));
+        // Navigate to the new folder details using its id.
+        context.go('/faculty/folders/details?id=${Uri.encodeComponent(folder.id)}');
+        return;
+      } on ApiException catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.validationSummary)));
+        return;
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to create folder.')));
+        return;
+      } finally {
+        if (mounted) setState(() => _saving = false);
+      }
     }
 
     setState(() => _saving = true);
@@ -71,7 +101,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Room'),
+        title: Text(_isCreatingRoom ? 'Create Room' : 'Create Folder'),
         backgroundColor: AppColors.navyBrand,
         foregroundColor: Colors.white,
       ),
@@ -80,44 +110,76 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            // Mode selector
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _isCreatingRoom = true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _isCreatingRoom ? AppColors.card : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Center(child: Text('Room', style: TextStyle(fontWeight: FontWeight.w700, color: _isCreatingRoom ? AppColors.textPrimary : AppColors.textMuted))),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _isCreatingRoom = false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: !_isCreatingRoom ? AppColors.card : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Center(child: Text('Folder', style: TextStyle(fontWeight: FontWeight.w700, color: !_isCreatingRoom ? AppColors.textPrimary : AppColors.textMuted))),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Common fields
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Room Name',
-                hintText: 'e.g. BSN 1A - Fundamentals',
-              ),
+              decoration: InputDecoration(labelText: _isCreatingRoom ? 'Room Name' : 'Folder Name', hintText: _isCreatingRoom ? 'e.g. BSN 1A - Fundamentals' : 'e.g. Pharmacology Books'),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _descriptionController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Description (optional)',
-              ),
+              decoration: const InputDecoration(labelText: 'Description (optional)'),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _subjectController,
-              decoration: const InputDecoration(
-                labelText: 'Subject (optional)',
-              ),
+              decoration: const InputDecoration(labelText: 'Subject (optional)'),
             ),
             const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('Private room'),
-              value: _isPrivate,
-              onChanged: (v) => setState(() => _isPrivate = v),
-            ),
-            SwitchListTile(
-              title: const Text('Require approval to join'),
-              subtitle: const Text('Off = students join automatically'),
-              value: _requiresApproval,
-              onChanged: (v) => setState(() => _requiresApproval = v),
-            ),
+            if (_isCreatingRoom) ...[
+              SwitchListTile(
+                title: const Text('Private room'),
+                value: _isPrivate,
+                onChanged: (v) => setState(() => _isPrivate = v),
+              ),
+              SwitchListTile(
+                title: const Text('Require approval to join'),
+                subtitle: const Text('Off = students join automatically'),
+                value: _requiresApproval,
+                onChanged: (v) => setState(() => _requiresApproval = v),
+              ),
+            ],
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _saving ? null : _save,
-              child: Text(_saving ? 'Creating...' : 'Create Room'),
+              child: Text(_saving ? 'Creating...' : (_isCreatingRoom ? 'Create Room' : 'Create Folder')),
             ),
           ],
         ),
