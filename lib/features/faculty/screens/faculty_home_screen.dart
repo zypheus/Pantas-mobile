@@ -37,10 +37,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     });
 
     try {
-      final overview = await _catalogService.getHomeOverview(refresh: refresh);
+      final books = await _catalogService.getNewArrivals(refresh: refresh);
       if (!mounted) return;
       setState(() {
-        _recommendedBooks = overview.recommendedBooks;
+        _recommendedBooks = books;
         _isLoading = false;
       });
     } catch (_) {
@@ -64,7 +64,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final user = UserService().currentUser;
-    final name = user?.name?.isNotEmpty == true ? user!.name : 'Faculty';
+    final name = user?.name.isNotEmpty == true ? user!.name : 'Faculty';
 
     return Scaffold(
       backgroundColor: AppColors.background,

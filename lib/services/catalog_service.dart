@@ -1,5 +1,6 @@
 import '../models/book.dart';
 import '../models/borrowed_book.dart';
+import '../models/classroom.dart';
 import '../core/cache/memory_cache_store.dart';
 import '../core/network/api_client.dart';
 
@@ -40,6 +41,14 @@ class CatalogService {
               .toList(growable: false);
         }
 
+        final facultyRaw = data['faculty_recommendations'];
+        List<FacultyRecommendationGroup> facultyRecommendations = const [];
+        if (facultyRaw is List) {
+          facultyRecommendations = facultyRaw
+              .map((item) => FacultyRecommendationGroup.fromJson(_asMap(item)))
+              .toList(growable: false);
+        }
+
         return HomeOverview(
           newArrivals: newArrivals is List
               ? newArrivals
@@ -56,6 +65,7 @@ class CatalogService {
           recommendationContext: RecommendationContext.fromJson(
             _asMap(data['recommendation_context']),
           ),
+          facultyRecommendations: facultyRecommendations,
         );
       },
     );
@@ -259,6 +269,7 @@ class HomeOverview {
   final HomeLoanStats loanStats;
   final List<Book> recommendedBooks;
   final RecommendationContext recommendationContext;
+  final List<FacultyRecommendationGroup> facultyRecommendations;
 
   const HomeOverview({
     required this.newArrivals,
@@ -266,6 +277,7 @@ class HomeOverview {
     required this.loanStats,
     this.recommendedBooks = const [],
     this.recommendationContext = const RecommendationContext(),
+    this.facultyRecommendations = const [],
   });
 }
 

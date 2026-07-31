@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../services/faculty_classroom_service.dart';
 
-/// Form to create a new folder for organizing teaching resources.
 class CreateFolderScreen extends StatefulWidget {
   const CreateFolderScreen({super.key});
 
@@ -11,19 +12,11 @@ class CreateFolderScreen extends StatefulWidget {
 }
 
 class _CreateFolderScreenState extends State<CreateFolderScreen> {
+  final _service = FacultyClassroomService();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  String? _selectedSubject;
+  bool _saving = false;
 
-  final _subjects = [
-    'Fundamentals of Nursing',
-    'Pharmacology',
-    'Pathophysiology',
-    'Health Assessment',
-    'Maternal-Newborn Nursing',
-  ];
-
-  /// Dispose controllers when the widget is removed from the tree.
   @override
   void dispose() {
     _nameController.dispose();
@@ -31,70 +24,62 @@ class _CreateFolderScreenState extends State<CreateFolderScreen> {
     super.dispose();
   }
 
-  /// Builds the create-folder form UI.
+  Future<void> _save() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Folder name is required.')),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      final folder = await _service.createFolder(
+        name: name,
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+      );
+      if (!mounted) return;
+      context.go('/faculty/folders/details?id=${folder.id}');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.validationSummary)),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.navyBrand,
         title: const Text('Create Folder'),
+        backgroundColor: AppColors.navyBrand,
         foregroundColor: Colors.white,
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildField(label: 'Folder Name', child: TextField(controller: _nameController, decoration: const InputDecoration(hintText: 'e.g. Pharmacology Books'))),
-              const SizedBox(height: 16),
-              _buildField(label: 'Description (optional)', child: TextField(controller: _descriptionController, decoration: const InputDecoration(hintText: 'Add a short description...'), maxLines: 3)),
-              const SizedBox(height: 16),
-              _buildField(
-                label: 'Select Subject',
-                child: DropdownButtonFormField<String>(
-                  value: _selectedSubject,
-                  decoration: const InputDecoration(hintText: 'Choose subject'),
-                  items: _subjects.map((subject) => DropdownMenuItem(value: subject, child: Text(subject))).toList(),
-                  onChanged: (value) => setState(() => _selectedSubject = value),
-                ),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: AppColors.navyBrand),
-                  onPressed: () {
-                    context.pop();
-                  },
-                  child: const Text('Create Folder'),
-                ),
-              ),
-            ],
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          TextField(
+            controller: _nameController,
+            decoration: const InputDecoration(labelText: 'Folder name'),
           ),
-        ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _descriptionController,
+            maxLines: 3,
+            decoration: const InputDecoration(labelText: 'Description'),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _saving ? null : _save,
+            child: Text(_saving ? 'Creating...' : 'Create Folder'),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildField({required String label, required Widget child}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: child,
-        ),
-      ],
     );
   }
 }

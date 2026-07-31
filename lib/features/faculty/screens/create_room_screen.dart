@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../services/faculty_classroom_service.dart';
 
-/// Form to create a new teaching room and configure its settings.
 class CreateRoomScreen extends StatefulWidget {
   const CreateRoomScreen({super.key});
 
@@ -11,158 +12,116 @@ class CreateRoomScreen extends StatefulWidget {
 }
 
 class _CreateRoomScreenState extends State<CreateRoomScreen> {
+  final _service = FacultyClassroomService();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  String? _selectedSubject;
+  final _subjectController = TextEditingController();
   bool _isPrivate = true;
-  bool _requiresApproval = true;
+  bool _requiresApproval = false;
+  bool _saving = false;
 
-  final _subjects = [
-    'Fundamentals of Nursing',
-    'Pharmacology',
-    'Pathophysiology',
-    'Health Assessment',
-  ];
-
-  /// Dispose controllers when closing the screen to avoid memory leaks.
   @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _subjectController.dispose();
     super.dispose();
   }
 
-  /// Builds the create-room form and options UI.
+  Future<void> _save() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Room name is required.')),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      final room = await _service.createClassroom(
+        name: name,
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        subject: _subjectController.text.trim().isEmpty
+            ? null
+            : _subjectController.text.trim(),
+        isPrivate: _isPrivate,
+        requiresApproval: _requiresApproval,
+      );
+      if (!mounted) return;
+      context.go('/faculty/rooms/details?id=${room.id}');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.validationSummary)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to create room.')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Room'),
         backgroundColor: AppColors.navyBrand,
+        foregroundColor: Colors.white,
       ),
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
+        child: ListView(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildField(
-                label: 'Room Name',
-                child: TextField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(hintText: 'e.g. BSN 1A - Fundamentals'),
-                ),
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Room Name',
+                hintText: 'e.g. BSN 1A - Fundamentals',
               ),
-              const SizedBox(height: 16),
-              _buildField(
-                label: 'Description (optional)',
-                child: TextField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(hintText: 'Add a short description...'),
-                  maxLines: 3,
-                ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _descriptionController,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Description (optional)',
               ),
-              const SizedBox(height: 16),
-              _buildField(
-                label: 'Select Subject',
-                child: DropdownButtonFormField<String>(
-                  value: _selectedSubject,
-                  decoration: const InputDecoration(border: InputBorder.none, hintText: 'Choose a subject'),
-                  items: _subjects
-                      .map((subject) => DropdownMenuItem(value: subject, child: Text(subject)))
-                      .toList(),
-                  onChanged: (value) => setState(() => _selectedSubject = value),
-                ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _subjectController,
+              decoration: const InputDecoration(
+                labelText: 'Subject (optional)',
               ),
-              const SizedBox(height: 16),
-              _buildToggleOption(
-                label: 'Privacy',
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: RadioListTile<bool>(
-                        title: const Text('Public'),
-                        value: false,
-                        groupValue: _isPrivate,
-                        onChanged: (value) => setState(() => _isPrivate = value ?? true),
-                      ),
-                    ),
-                    Expanded(
-                      child: RadioListTile<bool>(
-                        title: const Text('Private'),
-                        value: true,
-                        groupValue: _isPrivate,
-                        onChanged: (value) => setState(() => _isPrivate = value ?? true),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildToggleOption(
-                label: 'Join approval',
-                child: SwitchListTile(
-                  title: const Text('Require approval'),
-                  value: _requiresApproval,
-                  onChanged: (value) => setState(() => _requiresApproval = value),
-                  activeColor: AppColors.navyBrand,
-                ),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: AppColors.navyBrand),
-                  onPressed: () {
-                    context.pop();
-                  },
-                  child: const Text('Create Room'),
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              title: const Text('Private room'),
+              value: _isPrivate,
+              onChanged: (v) => setState(() => _isPrivate = v),
+            ),
+            SwitchListTile(
+              title: const Text('Require approval to join'),
+              subtitle: const Text('Off = students join automatically'),
+              value: _requiresApproval,
+              onChanged: (v) => setState(() => _requiresApproval = v),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _saving ? null : _save,
+              child: Text(_saving ? 'Creating...' : 'Create Room'),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildField({required String label, required Widget child}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: child,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildToggleOption({required String label, required Widget child}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: child,
-        ),
-      ],
     );
   }
 }

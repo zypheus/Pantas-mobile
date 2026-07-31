@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/book.dart';
 import '../../../models/borrowed_book.dart';
+import '../../../models/classroom.dart';
 import '../../../services/catalog_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/user_service.dart';
@@ -23,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Book> _newArrivals = const [];
   List<BorrowedBook> _currentLoans = const [];
   List<Book> _recommendations = const [];
+  List<FacultyRecommendationGroup> _facultyRecommendations = const [];
   String? _recommendationLabel;
   bool _isLoadingNewArrivals = true;
   bool _isLoadingLoans = true;
@@ -110,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _newArrivals = overview.newArrivals;
         _currentLoans = overview.activeLoans;
         _recommendations = overview.recommendedBooks;
+        _facultyRecommendations = overview.facultyRecommendations;
         _recommendationLabel = overview.recommendationContext.displayLabel;
         _isLoadingNewArrivals = false;
         _isLoadingLoans = false;
@@ -232,6 +235,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 14),
                       _buildRecommendationsList(context),
+                      const SizedBox(height: 20),
+                    ],
+                    if (_facultyRecommendations.isNotEmpty) ...[
+                      SectionTitle(
+                        title: 'From your classrooms',
+                        actionLabel: 'View all',
+                        onAction: () => context.push('/faculty_recommendations'),
+                      ),
+                      const SizedBox(height: 14),
+                      _buildFacultyRecommendationsPreview(context),
                       const SizedBox(height: 20),
                     ],
                     SectionTitle(
@@ -371,6 +384,49 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildFacultyRecommendationsPreview(BuildContext context) {
+    final first = _facultyRecommendations.first;
+    final books = first.books.take(8).toList(growable: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          first.classroom.name,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        if (_facultyRecommendations.length > 1)
+          Text(
+            '+ ${_facultyRecommendations.length - 1} more classroom${_facultyRecommendations.length > 2 ? 's' : ''}',
+            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+          ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 220,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: books.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final book = books[index];
+              return SizedBox(
+                width: 140,
+                child: BookResultCard(
+                  book: book,
+                  onTap: () => context.push('/book_details?id=${book.id}'),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

@@ -681,6 +681,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: () => context.push('/book_reservations'),
                     ),
 
+                    PantasProfileTile(
+                      icon: Icons.class_rounded,
+                      title: 'My classrooms',
+                      subtitle: 'View joined faculty classrooms',
+                      onTap: () => context.push('/classrooms'),
+                    ),
+
+                    PantasProfileTile(
+                      icon: Icons.vpn_key_rounded,
+                      title: 'Join classroom',
+                      subtitle: 'Enter a faculty join code',
+                      onTap: () => context.push('/classrooms/join'),
+                    ),
+
                     const SizedBox(height: 36),
                     _buildSignOutButton(),
                     const SizedBox(height: 48),
