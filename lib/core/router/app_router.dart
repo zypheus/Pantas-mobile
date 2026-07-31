@@ -4,7 +4,9 @@ import '../../features/auth/screens/change_password_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
+import '../../features/faculty/screens/faculty_home_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../services/user_service.dart';
 import '../../features/catalog/screens/catalog_search_screen.dart';
 import '../../features/catalog/screens/book_details_screen.dart';
 import '../../features/catalog/screens/book_reservations_screen.dart';
@@ -43,6 +45,10 @@ class AppRouter {
         name: 'change-password',
         path: '/change-password',
         builder: (context, state) => const ChangePasswordScreen(),
+      ),
+      GoRoute(
+        path: '/faculty_home',
+        builder: (context, state) => const FacultyHomeScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
@@ -128,4 +134,13 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(body: child, bottomNavigationBar: const FloatingNavBar());
   }
+}
+
+/// Returns the post-auth home route for the current user role.
+String homeRouteForCurrentUser() {
+  final user = UserService().currentUser;
+  if (user?.isFaculty == true) {
+    return '/faculty_home';
+  }
+  return '/home';
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
 
@@ -89,7 +90,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         ),
       );
 
-      context.go('/home');
+      context.go(homeRouteForCurrentUser());
     } on ApiException catch (exception) {
       if (!mounted) return;
       _showError(exception.validationSummary);

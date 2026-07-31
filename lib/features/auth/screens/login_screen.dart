@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
 import '../../../shared/widgets/pantas_loader.dart';
@@ -26,12 +27,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    final studentId = studentIdController.text.trim();
+    final loginId = studentIdController.text.trim();
     final password = passwordController.text;
 
-    if (studentId.isEmpty) {
+    if (loginId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your Student ID.')),
+        const SnackBar(content: Text('Please enter your ID Number.')),
       );
       return;
     }
@@ -46,14 +47,14 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final result = await AuthService().login(studentId, password);
+      final result = await AuthService().login(loginId, password);
 
       if (!mounted) return;
 
       if (result.mustChangePassword) {
         context.go('/change-password');
       } else {
-        context.go('/home');
+        context.go(homeRouteForCurrentUser());
       }
     } on ApiException catch (exception) {
       if (!mounted) return;
@@ -229,7 +230,8 @@ class _LoginScreenState extends State<LoginScreen> {
             keyboardType: TextInputType.text,
             enabled: !_isLoading,
             decoration: InputDecoration(
-              labelText: 'Student ID',
+              labelText: 'ID Number',
+              hintText: 'Student or Faculty ID',
               prefixIcon: const Icon(Icons.badge_outlined, size: 20),
               filled: true,
               fillColor: AppColors.surface,

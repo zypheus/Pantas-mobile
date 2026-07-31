@@ -5,6 +5,9 @@ class User {
   final String? role;
   final String? studentId;
   final String? studentNumber;
+  final String? employeeId;
+  final String? department;
+  final String? designation;
   final String? firstName;
   final String? lastName;
   final String? middleInitial;
@@ -30,6 +33,9 @@ class User {
     this.role,
     this.studentId,
     this.studentNumber,
+    this.employeeId,
+    this.department,
+    this.designation,
     this.firstName,
     this.lastName,
     this.middleInitial,
@@ -49,35 +55,45 @@ class User {
     required this.borrowingLimit,
   });
 
+  bool get isFaculty => role?.toLowerCase() == 'faculty';
+  bool get isStudent => role?.toLowerCase() == 'student' || (!isFaculty && studentNumber != null);
+
   factory User.fromApiJson(Map<String, dynamic> json) {
     final userJson = _asMap(json['user'] ?? json);
     final studentJson = _asMap(json['student']);
+    final facultyJson = _asMap(json['faculty']);
+    final role = userJson['role']?.toString();
+    final isFaculty = role?.toLowerCase() == 'faculty';
+    final profileJson = isFaculty ? facultyJson : studentJson;
 
     return User(
       id: _stringValue(userJson['id']),
       name: _stringValue(
         userJson['name'] ??
-            _studentName(studentJson) ??
+            _personName(profileJson) ??
             userJson['email'] ??
             'User',
       ),
-      email: _stringValue(userJson['email']),
-      role: userJson['role']?.toString(),
+      email: _stringValue(userJson['email'] ?? facultyJson['email']),
+      role: role,
       studentId: _nullableString(studentJson['id'] ?? userJson['student_id']),
       studentNumber: _nullableString(studentJson['id_number']),
+      employeeId: _nullableString(facultyJson['employee_id']),
+      department: _nullableString(facultyJson['department']),
+      designation: _nullableString(facultyJson['designation']),
       firstName: _nullableString(
-        studentJson['firstname'] ?? userJson['fname'] ?? userJson['first_name'],
+        profileJson['firstname'] ?? userJson['fname'] ?? userJson['first_name'],
       ),
       lastName: _nullableString(
-        studentJson['lastname'] ?? userJson['lname'] ?? userJson['last_name'],
+        profileJson['lastname'] ?? userJson['lname'] ?? userJson['last_name'],
       ),
       middleInitial: _nullableString(
-        studentJson['middle_initial'] ?? studentJson['middle_name'],
+        profileJson['middle_initial'] ?? profileJson['middle_name'],
       ),
       course: _nullableString(studentJson['course']),
       year: _nullableString(studentJson['year']),
-      birthday: _nullableString(studentJson['birthday'] ?? studentJson['birth_date']),
-      mobileNumber: _nullableString(studentJson['mobile_number']),
+      birthday: _nullableString(profileJson['birthday'] ?? profileJson['birth_date']),
+      mobileNumber: _nullableString(profileJson['mobile_number']),
       address: _nullableString(studentJson['address']),
       emergencyContact: _nullableString(
         studentJson['emergency_contact'] ?? studentJson['emergency_contact_name'],
@@ -95,10 +111,13 @@ class User {
         studentJson['emergency_address'] ?? studentJson['emergency_contact_address'],
       ),
       profilePicture: _nullableString(
-        studentJson['profile_picture'] ?? userJson['profile_picture'] ?? userJson['avatar'],
+        profileJson['profile_picture'] ?? userJson['profile_picture'] ?? userJson['avatar'],
       ),
       accountStatus: _stringValue(
-        userJson['account_status'] ?? studentJson['status'] ?? 'Active',
+        userJson['account_status'] ??
+            facultyJson['account_status'] ??
+            studentJson['status'] ??
+            'Active',
       ),
       libraryQrCode: _nullableString(
         studentJson['qr_code'] ??
@@ -148,12 +167,12 @@ class User {
     return int.tryParse(value?.toString() ?? '') ?? fallback;
   }
 
-  static String? _studentName(Map<String, dynamic> studentJson) {
+  static String? _personName(Map<String, dynamic> personJson) {
     final firstName = _nullableString(
-      studentJson['firstname'] ?? studentJson['first_name'],
+      personJson['firstname'] ?? personJson['first_name'],
     );
     final lastName = _nullableString(
-      studentJson['lastname'] ?? studentJson['last_name'],
+      personJson['lastname'] ?? personJson['last_name'],
     );
 
     final parts = [firstName, lastName].whereType<String>().toList();

@@ -27,14 +27,15 @@ class AuthService {
   final TokenStorage _tokenStorage = TokenStorage();
   final UserService _userService = UserService();
 
-  /// Logs in with student ID and password.
+  /// Logs in with ID Number (student or faculty) and password.
   /// Returns a [LoginResult] indicating where to route the user next.
-  Future<LoginResult> login(String studentId, String password) async {
+  Future<LoginResult> login(String loginId, String password) async {
     final response = await _apiClient.post(
       '/login',
       authenticated: false,
       body: {
-        'student_id': studentId.trim(),
+        'login_id': loginId.trim(),
+        'student_id': loginId.trim(), // backward compatible with older API clients
         'password': password,
       },
     );

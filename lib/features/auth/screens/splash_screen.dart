@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
 import '../../../shared/widgets/pantas_loader.dart';
@@ -59,7 +60,7 @@ class _SplashScreenState extends State<SplashScreen>
     final isAuthenticated = await authService.isAuthenticated();
     if (!mounted) return;
     if (isAuthenticated) {
-      context.go('/home');
+      context.go(homeRouteForCurrentUser());
     } else {
       context.go('/login');
     }
