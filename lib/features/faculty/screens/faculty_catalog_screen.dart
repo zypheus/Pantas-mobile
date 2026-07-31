@@ -3,14 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
 import '../../../models/book.dart';
 import '../../../services/catalog_service.dart';
 import '../../catalog/widgets/book_result_card.dart';
 
 /// Catalog browsing screen for faculty — supports search and listing.
 class FacultyCatalogScreen extends StatefulWidget {
-  const FacultyCatalogScreen({super.key});
+  const FacultyCatalogScreen({super.key, this.folderId});
+
+  /// When set, book details open with this folder preselected for Add to Folder.
+  final String? folderId;
 
   @override
   State<FacultyCatalogScreen> createState() => _FacultyCatalogScreenState();
@@ -150,7 +152,19 @@ class _FacultyCatalogScreenState extends State<FacultyCatalogScreen> {
                                   final book = _results[index];
                                   return BookResultCard(
                                     book: book,
-                                    onTap: () => context.go('/faculty/book_details?id=${Uri.encodeComponent(book.id)}'),
+                                    onTap: () {
+                                      final folderId = widget.folderId;
+                                      final query = StringBuffer(
+                                        '/faculty/book_details?id=${Uri.encodeComponent(book.id)}',
+                                      );
+                                      if (folderId != null &&
+                                          folderId.isNotEmpty) {
+                                        query.write(
+                                          '&folderId=${Uri.encodeComponent(folderId)}',
+                                        );
+                                      }
+                                      context.push(query.toString());
+                                    },
                                   );
                                 },
                               ),

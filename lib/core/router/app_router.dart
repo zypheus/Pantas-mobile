@@ -21,6 +21,7 @@ import '../../features/catalog/screens/book_details_screen.dart';
 import '../../features/catalog/screens/book_reservations_screen.dart';
 import '../../features/faculty/screens/faculty_catalog_screen.dart';
 import '../../features/faculty/screens/faculty_book_details_screen.dart';
+import '../../features/faculty/screens/faculty_profile_screen.dart';
 import '../../features/borrow_cart/screens/borrow_cart_screen.dart';
 import '../../features/borrow_cart/screens/borrow_requests_screen.dart';
 import '../../features/borrowed_books/screens/borrowed_books_screen.dart';
@@ -122,18 +123,25 @@ class AppRouter {
           ),
           GoRoute(
             path: '/faculty/catalog',
-            builder: (context, state) => const FacultyCatalogScreen(),
+            builder: (context, state) {
+              final folderId = state.uri.queryParameters['folderId'];
+              return FacultyCatalogScreen(folderId: folderId);
+            },
           ),
           GoRoute(
             path: '/faculty/book_details',
             builder: (context, state) {
               final id = state.uri.queryParameters['id'] ?? '';
-              return FacultyBookDetailsScreen(bookId: id);
+              final folderId = state.uri.queryParameters['folderId'];
+              return FacultyBookDetailsScreen(
+                bookId: id,
+                folderId: folderId,
+              );
             },
           ),
           GoRoute(
             path: '/faculty/profile',
-            builder: (context, state) => const ProfileScreen(),
+            builder: (context, state) => const FacultyProfileScreen(),
           ),
         ],
       ),

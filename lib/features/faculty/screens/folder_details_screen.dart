@@ -50,7 +50,9 @@ class _FolderDetailsScreenState extends State<FolderDetailsScreen> {
         actions: [
           IconButton(
             tooltip: 'Add books from catalog',
-            onPressed: () => context.push('/faculty/catalog'),
+            onPressed: () => context.push(
+              '/faculty/catalog?folderId=${Uri.encodeComponent(widget.folderId)}',
+            ),
             icon: const Icon(Icons.add_rounded),
           ),
         ],

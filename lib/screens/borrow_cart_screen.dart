@@ -21,9 +21,9 @@ class _BorrowCartScreenState extends State<BorrowCartScreen> {
   Future<void> _submitCheckout() async {
     final cartItems = _borrowService.getBorrowCart();
     if (cartItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cart is empty')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Cart is empty')));
       return;
     }
 
@@ -37,7 +37,9 @@ class _BorrowCartScreenState extends State<BorrowCartScreen> {
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Checkout request submitted successfully')),
+          const SnackBar(
+            content: Text('Checkout request submitted successfully'),
+          ),
         );
         Navigator.of(context).pop();
       } else {
@@ -47,9 +49,9 @@ class _BorrowCartScreenState extends State<BorrowCartScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('An error occurred')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('An error occurred')));
       }
     } finally {
       if (mounted) {
@@ -65,9 +67,7 @@ class _BorrowCartScreenState extends State<BorrowCartScreen> {
     final cartItems = _borrowService.getBorrowCart();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Borrow Cart'),
-      ),
+      appBar: AppBar(title: const Text('Borrow Cart')),
       body: cartItems.isEmpty
           ? Center(
               child: Column(
