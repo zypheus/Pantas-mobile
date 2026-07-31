@@ -1,5 +1,11 @@
+import 'dart:io';
+
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
@@ -56,9 +62,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final List<Offset?> _sSig = [];
   final List<Offset?> _fSig = [];
 
-  // ── Profile photo placeholder ───────────────────────────────────
-  bool _sPhoto = false;
-  bool _fPhoto = false;
+  // ── Profile photo picker ─────────────────────────────────────────
+  final ImagePicker _imagePicker = ImagePicker();
+  File? _sPhotoFile;
+  File? _fPhotoFile;
+  Uint8List? _sPhotoBytes;
+  Uint8List? _fPhotoBytes;
+  bool _isPickingPhoto = false;
+  bool _isSubmittingStudent = false;
 
   static const _courses = [
     'BSIT',
@@ -400,8 +411,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _section('Profile Picture'),
         const SizedBox(height: 12),
         _photoPicker(
-          hasPhoto: _sPhoto,
-          onTap: () => setState(() => _sPhoto = !_sPhoto),
+          imageBytes: _sPhotoBytes,
+          onTap: _isPickingPhoto ? null : () => _pickProfilePhoto(isFaculty: false),
         ),
         const SizedBox(height: 20),
         _section('Signature'),
@@ -418,7 +429,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 8),
         _clearBtn(() => setState(() => _sSig.clear())),
         const SizedBox(height: 24),
-        _submitBtn('Submit Student Registration', () => context.go('/home')),
+        _submitBtn(
+          'Submit Student Registration',
+          _isSubmittingStudent ? () {} : _submitStudentRegistration,
+        ),
         const SizedBox(height: 16),
         _signInLink(),
       ],
@@ -512,8 +526,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _section('Formal picture (optional)'),
         const SizedBox(height: 12),
         _photoPicker(
-          hasPhoto: _fPhoto,
-          onTap: () => setState(() => _fPhoto = !_fPhoto),
+          imageBytes: _fPhotoBytes,
+          onTap: _isPickingPhoto ? null : () => _pickProfilePhoto(isFaculty: true),
         ),
         const SizedBox(height: 20),
         _section('Signature (optional)'),
@@ -608,6 +622,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             _fENumber.text.trim().isEmpty ? null : _fENumber.text.trim(),
         emergencyAddress:
             _fEAddress.text.trim().isEmpty ? null : _fEAddress.text.trim(),
+        profilePicture: _fPhotoFile,
       );
 
       if (!mounted) return;
@@ -625,6 +640,105 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } finally {
       if (mounted) setState(() => _isSubmittingFaculty = false);
+    }
+  }
+
+  Future<void> _pickProfilePhoto({required bool isFaculty}) async {
+    setState(() => _isPickingPhoto = true);
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+      setState(() {
+        if (isFaculty) {
+          _fPhotoFile = File(image.path);
+          _fPhotoBytes = bytes;
+        } else {
+          _sPhotoFile = File(image.path);
+          _sPhotoBytes = bytes;
+        }
+      });
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to pick photo.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPickingPhoto = false);
+    }
+  }
+
+  Future<void> _submitStudentRegistration() async {
+    final firstname = _sFirstName.text.trim();
+    final lastname = _sLastName.text.trim();
+    final studentId = _sId.text.trim();
+    final mobile = _sMobile.text.trim();
+
+    String? error;
+    if (firstname.isEmpty) {
+      error = 'First name is required.';
+    } else if (lastname.isEmpty) {
+      error = 'Last name is required.';
+    } else if (studentId.isEmpty) {
+      error = 'ID number is required.';
+    } else if (_sDob == null) {
+      error = 'Date of birth is required.';
+    } else if (_sCourse == null || _sCourse!.isEmpty) {
+      error = 'Please select a course.';
+    } else if (_sYear == null || _sYear!.isEmpty) {
+      error = 'Please select a year.';
+    } else if (mobile.isEmpty) {
+      error = 'Mobile number is required.';
+    }
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+
+    setState(() => _isSubmittingStudent = true);
+    try {
+      final message = await _authService.registerStudent(
+        firstname: firstname,
+        lastname: lastname,
+        middleInitial: _sMiddle.text.trim().isEmpty ? null : _sMiddle.text.trim(),
+        studentId: studentId,
+        course: _sCourse!,
+        year: _sYear!,
+        birthday: _sDob!,
+        mobileNumber: mobile,
+        address: _sAddress.text.trim().isEmpty ? null : _sAddress.text.trim(),
+        emergencyContactName:
+            _sEPerson.text.trim().isEmpty ? null : _sEPerson.text.trim(),
+        emergencyContactRelationship:
+            _sERelation.text.trim().isEmpty ? null : _sERelation.text.trim(),
+        emergencyContactNumber:
+            _sENumber.text.trim().isEmpty ? null : _sENumber.text.trim(),
+        emergencyAddress:
+            _sEAddress.text.trim().isEmpty ? null : _sEAddress.text.trim(),
+        profilePicture: _sPhotoFile,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      context.go('/login');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to submit registration.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmittingStudent = false);
     }
   }
 
@@ -792,7 +906,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _photoPicker({required bool hasPhoto, required VoidCallback onTap}) {
+  Widget _photoPicker({required Uint8List? imageBytes, required VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -802,12 +916,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.border, width: 1.5),
         ),
-        child: hasPhoto
-            ? const Center(
-                child: Icon(
-                  Icons.check_circle_outline_rounded,
-                  size: 36,
-                  color: AppColors.success,
+        child: imageBytes != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.memory(
+                  imageBytes,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
                 ),
               )
             : Column(

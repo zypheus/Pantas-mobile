@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../core/network/api_client.dart';
 import '../core/network/api_exception.dart';
 import '../core/cache/memory_cache_store.dart';
@@ -77,33 +79,107 @@ class AuthService {
     String? emergencyContactRelationship,
     String? emergencyContactNumber,
     String? emergencyAddress,
+    File? profilePicture,
   }) async {
-    final response = await _apiClient.post(
-      '/register/faculty',
-      authenticated: false,
-      body: {
-        'firstname': firstname.trim(),
-        'lastname': lastname.trim(),
-        'middle_initial': middleInitial?.trim(),
-        'employee_id': employeeId.trim(),
-        'designation': designation.trim(),
-        'department': department.trim(),
-        'program': department.trim(),
-        'birthday':
-            '${birthday.year.toString().padLeft(4, '0')}-'
-            '${birthday.month.toString().padLeft(2, '0')}-'
-            '${birthday.day.toString().padLeft(2, '0')}',
-        'mobile_number': mobileNumber.trim(),
-        'address': address?.trim(),
-        'emergency_contact_name': emergencyContactName?.trim(),
-        'emergency_contact_relationship': emergencyContactRelationship?.trim(),
-        'emergency_contact_number': emergencyContactNumber?.trim(),
-        'emergency_address': emergencyAddress?.trim(),
-      }..removeWhere((_, value) => value == null || value == ''),
-    );
+    final fields = {
+      'firstname': firstname.trim(),
+      'lastname': lastname.trim(),
+      'middle_initial': middleInitial?.trim(),
+      'employee_id': employeeId.trim(),
+      'designation': designation.trim(),
+      'department': department.trim(),
+      'program': department.trim(),
+      'birthday':
+          '${birthday.year.toString().padLeft(4, '0')}-'
+          '${birthday.month.toString().padLeft(2, '0')}-'
+          '${birthday.day.toString().padLeft(2, '0')}',
+      'mobile_number': mobileNumber.trim(),
+      'address': address?.trim(),
+      'emergency_contact_name': emergencyContactName?.trim(),
+      'emergency_contact_relationship': emergencyContactRelationship?.trim(),
+      'emergency_contact_number': emergencyContactNumber?.trim(),
+      'emergency_address': emergencyAddress?.trim(),
+    }..removeWhere((_, value) => value == null || value == '');
+
+    final response = profilePicture != null
+        ? await _apiClient.postMultipart(
+            '/register/faculty',
+            authenticated: false,
+            fields: fields.cast<String, String>(),
+            files: [
+              FileUpload(
+                field: 'profile_picture',
+                path: profilePicture.path,
+                filename: profilePicture.path.split(Platform.pathSeparator).last,
+              ),
+            ],
+          )
+        : await _apiClient.post(
+            '/register/faculty',
+            authenticated: false,
+            body: fields,
+          );
 
     return response['message']?.toString() ??
         'Faculty registration submitted. Please wait for library approval.';
+  }
+
+  Future<String> registerStudent({
+    required String firstname,
+    required String lastname,
+    String? middleInitial,
+    required String studentId,
+    required String course,
+    required String year,
+    required DateTime birthday,
+    required String mobileNumber,
+    String? address,
+    String? emergencyContactName,
+    String? emergencyContactRelationship,
+    String? emergencyContactNumber,
+    String? emergencyAddress,
+    File? profilePicture,
+  }) async {
+    final fields = {
+      'firstname': firstname.trim(),
+      'lastname': lastname.trim(),
+      'middle_initial': middleInitial?.trim(),
+      'student_id': studentId.trim(),
+      'course': course.trim(),
+      'year': year.trim(),
+      'birthday':
+          '${birthday.year.toString().padLeft(4, '0')}-'
+          '${birthday.month.toString().padLeft(2, '0')}-'
+          '${birthday.day.toString().padLeft(2, '0')}',
+      'mobile_number': mobileNumber.trim(),
+      'address': address?.trim(),
+      'emergency_contact_name': emergencyContactName?.trim(),
+      'emergency_contact_relationship': emergencyContactRelationship?.trim(),
+      'emergency_contact_number': emergencyContactNumber?.trim(),
+      'emergency_address': emergencyAddress?.trim(),
+    }..removeWhere((_, value) => value == null || value == '');
+
+    final response = profilePicture != null
+        ? await _apiClient.postMultipart(
+            '/register/student',
+            authenticated: false,
+            fields: fields.cast<String, String>(),
+            files: [
+              FileUpload(
+                field: 'profile_picture',
+                path: profilePicture.path,
+                filename: profilePicture.path.split(Platform.pathSeparator).last,
+              ),
+            ],
+          )
+        : await _apiClient.post(
+            '/register/student',
+            authenticated: false,
+            body: fields,
+          );
+
+    return response['message']?.toString() ??
+        'Student registration submitted. Please wait for library approval.';
   }
 
   Future<bool> changePassword({
