@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../services/auth_service.dart';
 
 enum _Tab { student, faculty }
 
@@ -12,7 +14,9 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final _authService = AuthService();
   _Tab _tab = _Tab.student;
+  bool _isSubmittingFaculty = false;
 
   // ── Student fields ──────────────────────────────────────────────
   final _sFirstName = TextEditingController();
@@ -536,21 +540,92 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ]),
         const SizedBox(height: 24),
         _submitBtn(
-          'Submit Faculty & Staff Registration',
-          () => context.go('/home'),
+          _isSubmittingFaculty
+              ? 'Submitting...'
+              : 'Submit Faculty & Staff Registration',
+          _isSubmittingFaculty ? () {} : _submitFacultyRegistration,
         ),
         const SizedBox(height: 12),
         Center(
           child: TextButton(
-            onPressed: () => context.go('/login'),
+            onPressed: _isSubmittingFaculty ? null : () => context.go('/login'),
             child: const Text(
-              'Back to home',
+              'Back to login',
               style: TextStyle(fontSize: 13, color: AppColors.textMuted),
             ),
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _submitFacultyRegistration() async {
+    final firstname = _fFirstName.text.trim();
+    final lastname = _fLastName.text.trim();
+    final employeeId = _fEmployeeId.text.trim();
+    final designation = _fDesignation.text.trim();
+    final mobile = _fMobile.text.trim();
+
+    String? error;
+    if (firstname.isEmpty) {
+      error = 'First name is required.';
+    } else if (lastname.isEmpty) {
+      error = 'Last name is required.';
+    } else if (employeeId.isEmpty) {
+      error = 'Employee ID is required.';
+    } else if (designation.isEmpty) {
+      error = 'Designation is required.';
+    } else if (_fProgram == null || _fProgram!.isEmpty) {
+      error = 'Please select a program / department.';
+    } else if (_fBirthday == null) {
+      error = 'Birthday is required.';
+    } else if (mobile.isEmpty) {
+      error = 'Mobile number is required.';
+    }
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+
+    setState(() => _isSubmittingFaculty = true);
+    try {
+      final message = await _authService.registerFaculty(
+        firstname: firstname,
+        lastname: lastname,
+        middleInitial: _fMiddle.text.trim().isEmpty ? null : _fMiddle.text.trim(),
+        employeeId: employeeId,
+        designation: designation,
+        department: _fProgram!,
+        birthday: _fBirthday!,
+        mobileNumber: mobile,
+        address: _fAddress.text.trim().isEmpty ? null : _fAddress.text.trim(),
+        emergencyContactName:
+            _fEPerson.text.trim().isEmpty ? null : _fEPerson.text.trim(),
+        emergencyContactRelationship:
+            _fERelation.text.trim().isEmpty ? null : _fERelation.text.trim(),
+        emergencyContactNumber:
+            _fENumber.text.trim().isEmpty ? null : _fENumber.text.trim(),
+        emergencyAddress:
+            _fEAddress.text.trim().isEmpty ? null : _fEAddress.text.trim(),
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      context.go('/login');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to submit registration.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmittingFaculty = false);
+    }
   }
 
   // ── Shared widgets ───────────────────────────────────────────────

@@ -62,6 +62,50 @@ class AuthService {
     );
   }
 
+  /// Submits a teaching-faculty registration for library staff approval.
+  Future<String> registerFaculty({
+    required String firstname,
+    required String lastname,
+    String? middleInitial,
+    required String employeeId,
+    required String designation,
+    required String department,
+    required DateTime birthday,
+    required String mobileNumber,
+    String? address,
+    String? emergencyContactName,
+    String? emergencyContactRelationship,
+    String? emergencyContactNumber,
+    String? emergencyAddress,
+  }) async {
+    final response = await _apiClient.post(
+      '/register/faculty',
+      authenticated: false,
+      body: {
+        'firstname': firstname.trim(),
+        'lastname': lastname.trim(),
+        'middle_initial': middleInitial?.trim(),
+        'employee_id': employeeId.trim(),
+        'designation': designation.trim(),
+        'department': department.trim(),
+        'program': department.trim(),
+        'birthday':
+            '${birthday.year.toString().padLeft(4, '0')}-'
+            '${birthday.month.toString().padLeft(2, '0')}-'
+            '${birthday.day.toString().padLeft(2, '0')}',
+        'mobile_number': mobileNumber.trim(),
+        'address': address?.trim(),
+        'emergency_contact_name': emergencyContactName?.trim(),
+        'emergency_contact_relationship': emergencyContactRelationship?.trim(),
+        'emergency_contact_number': emergencyContactNumber?.trim(),
+        'emergency_address': emergencyAddress?.trim(),
+      }..removeWhere((_, value) => value == null || value == ''),
+    );
+
+    return response['message']?.toString() ??
+        'Faculty registration submitted. Please wait for library approval.';
+  }
+
   Future<bool> changePassword({
     required String currentPassword,
     required String newPassword,
