@@ -583,12 +583,12 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
-                radius: 22,
+                radius: 26,
                 backgroundColor: const Color(0xFFFFCC00),
                 child: Text(
                   initial,
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: AppColors.navyBrand,
                   ),
@@ -607,7 +607,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       displayName,
                       style: const TextStyle(
@@ -621,6 +621,41 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               _buildNotificationBell(context),
             ],
+          ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: () => context.go('/search'),
+            child: Container(
+              width: double.infinity,
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.search_rounded,
+                    color: Colors.white.withValues(alpha: 0.7),
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Search books, authors...',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -802,14 +837,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () => GoRouter.of(context).go('/notifications'),
       child: SizedBox(
-        width: 48,
-        height: 48,
+        width: 40,
+        height: 40,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
             Container(
-              width: 42,
-              height: 42,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -821,7 +856,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Icon(
                 Icons.notifications_rounded,
                 color: AppColors.navyBrand,
-                size: 22,
+                size: 18,
               ),
             ),
             if (hasUnread)
