@@ -215,7 +215,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
-        childAspectRatio: 1.85,
+        childAspectRatio: 1.6,
         children: [
           _SummaryCard(label: 'My Subjects', value: _isStatsLoading ? '—' : '$_subjectsCount', icon: Icons.book_rounded),
           _SummaryCard(label: 'My Folders', value: _isStatsLoading ? '—' : '$_foldersCount', icon: Icons.folder_rounded),
@@ -229,32 +229,44 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   Widget _buildQuickActions(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: _ActionTile(
-              label: 'Browse Catalog',
-              icon: Icons.menu_book_rounded,
-              onTap: () => context.go('/faculty/catalog'),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _ActionTile(
-              label: 'Create Folder',
-              icon: Icons.create_new_folder_rounded,
-              onTap: () => context.go('/faculty/create-folder'),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _ActionTile(
-              label: 'Create Room',
-              icon: Icons.group_add_rounded,
-              onTap: () => context.go('/faculty/create-room'),
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 580;
+          final itemWidth = isNarrow
+              ? constraints.maxWidth
+              : (constraints.maxWidth - 24) / 3;
+
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: itemWidth,
+                child: _ActionTile(
+                  label: 'Browse Catalog',
+                  icon: Icons.menu_book_rounded,
+                  onTap: () => context.go('/faculty/catalog'),
+                ),
+              ),
+              SizedBox(
+                width: itemWidth,
+                child: _ActionTile(
+                  label: 'Create Folder',
+                  icon: Icons.create_new_folder_rounded,
+                  onTap: () => context.go('/faculty/create-folder'),
+                ),
+              ),
+              SizedBox(
+                width: itemWidth,
+                child: _ActionTile(
+                  label: 'Create Room',
+                  icon: Icons.group_add_rounded,
+                  onTap: () => context.go('/faculty/create-room'),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -348,7 +360,7 @@ class _SummaryCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(4),
@@ -358,6 +370,7 @@ class _SummaryCard extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
