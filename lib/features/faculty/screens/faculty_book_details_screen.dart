@@ -290,94 +290,105 @@ class _FacultyBookDetailsScreenState extends State<FacultyBookDetailsScreen>
     final hasPreselectedFolder =
         widget.folderId != null && widget.folderId!.isNotEmpty;
 
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Availability'),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildInfoTile('Status', details.book.availability),
-              _buildInfoTile(
-                'Copies',
-                '${details.book.availableCopies}/${details.book.totalCopies}',
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('Availability'),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildInfoTile('Status', details.book.availability),
+                _buildInfoTile(
+                  'Copies',
+                  '${details.book.availableCopies}/${details.book.totalCopies}',
+                ),
+              ],
+            ),
+            if (hasPreselectedFolder) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Adding from a folder — tap Add to Folder to place this book there.',
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 13,
+                ),
               ),
             ],
-          ),
-          if (hasPreselectedFolder) ...[
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.navyBrand,
+                ),
+                onPressed: _isAdding ? null : _onAddToFolder,
+                child: _isAdding
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        hasPreselectedFolder
+                            ? 'Add to this Folder'
+                            : 'Add to Folder',
+                      ),
+              ),
+            ),
             const SizedBox(height: 12),
-            Text(
-              'Adding from a folder — tap Add to Folder to place this book there.',
-              style: TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 13,
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.navyBrand,
+                ),
+                onPressed: _isAdding ? null : _onAddToRoom,
+                child: const Text('Add to Room'),
               ),
             ),
           ],
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: AppColors.navyBrand,
-              ),
-              onPressed: _isAdding ? null : _onAddToFolder,
-              child: _isAdding
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(
-                      hasPreselectedFolder
-                          ? 'Add to this Folder'
-                          : 'Add to Folder',
-                    ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: AppColors.navyBrand,
-              ),
-              onPressed: _isAdding ? null : _onAddToRoom,
-              child: const Text('Add to Room'),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildDescriptionTab() {
     final description = _details!.description;
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Description'),
-          const SizedBox(height: 12),
-          Text(
-            description.generalNote,
-            style: const TextStyle(color: AppColors.textSecondary, height: 1.5),
-          ),
-        ],
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('Description'),
+            const SizedBox(height: 12),
+            Text(
+              description.generalNote,
+              style: const TextStyle(color: AppColors.textSecondary, height: 1.5),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMarcViewTab() {
-    return const Center(child: Text('Additional information available here.'));
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: const Center(
+          child: Text('Additional information available here.'),
+        ),
+      ),
+    );
   }
 
   Widget _buildSectionTitle(String title) {
