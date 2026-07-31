@@ -195,43 +195,56 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: _buildNotificationBell(context),
+              _buildWelcomeHeader(context),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _buildStatsRow(),
               ),
               const SizedBox(height: 16),
-              _buildStatsRow(),
-              const SizedBox(height: 16),
-              _buildQuickShortcuts(context),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _buildQuickShortcuts(context),
+              ),
               if (reminder != null) ...[
                 const SizedBox(height: 24),
-                _buildReminderCard(reminder),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _buildReminderCard(reminder),
+                ),
               ],
               const SizedBox(height: 24),
-              if (_recommendations.isNotEmpty ||
-                  _isLoadingRecommendations ||
-                  _recommendationsError != null) ...[
-                SectionTitle(
-                  title: _recommendationsTitle,
-                  actionLabel: 'View all',
-                  onAction: () => context.go('/search'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_recommendations.isNotEmpty ||
+                        _isLoadingRecommendations ||
+                        _recommendationsError != null) ...[
+                      SectionTitle(
+                        title: _recommendationsTitle,
+                        actionLabel: 'View all',
+                        onAction: () => context.go('/search'),
+                      ),
+                      const SizedBox(height: 14),
+                      _buildRecommendationsList(context),
+                      const SizedBox(height: 20),
+                    ],
+                    SectionTitle(
+                      title: 'New Arrivals',
+                      actionLabel: 'View all',
+                      onAction: () => context.go('/search'),
+                    ),
+                    const SizedBox(height: 14),
+                    _buildNewArrivalsList(context),
+                    const SizedBox(height: 8),
+                  ],
                 ),
-                const SizedBox(height: 14),
-                _buildRecommendationsList(context),
-                const SizedBox(height: 20),
-              ],
-              SectionTitle(
-                title: 'New Arrivals',
-                actionLabel: 'View all',
-                onAction: () => context.go('/search'),
               ),
-              const SizedBox(height: 14),
-              _buildNewArrivalsList(context),
-              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -545,6 +558,80 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+  }
+
+  Widget _buildWelcomeHeader(BuildContext context) {
+    final user = _userService.currentUser;
+    final displayName = user?.firstName ?? user?.name ?? 'User';
+    final greeting = _greeting();
+    final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      decoration: const BoxDecoration(
+        gradient: AppColors.heroGradient,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: const Color(0xFFFFCC00),
+                child: Text(
+                  initial,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navyBrand,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      greeting,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      displayName,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _buildNotificationBell(context),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
   }
 
   Widget _buildStatsRow() {
