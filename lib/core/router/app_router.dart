@@ -5,11 +5,22 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/faculty/screens/faculty_home_screen.dart';
+import '../../features/faculty/screens/my_folders_screen.dart';
+import '../../features/faculty/screens/create_folder_screen.dart';
+import '../../features/faculty/screens/folder_details_screen.dart';
+import '../../features/faculty/screens/my_rooms_screen.dart';
+import '../../features/faculty/screens/create_room_screen.dart';
+import '../../features/faculty/screens/room_details_screen.dart';
+import '../../features/faculty/screens/share_room_screen.dart';
+import '../../features/faculty/screens/manage_students_screen.dart';
+import '../../features/faculty/screens/add_books_to_room_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../services/user_service.dart';
 import '../../features/catalog/screens/catalog_search_screen.dart';
 import '../../features/catalog/screens/book_details_screen.dart';
 import '../../features/catalog/screens/book_reservations_screen.dart';
+import '../../features/faculty/screens/faculty_catalog_screen.dart';
+import '../../features/faculty/screens/faculty_book_details_screen.dart';
 import '../../features/borrow_cart/screens/borrow_cart_screen.dart';
 import '../../features/borrow_cart/screens/borrow_requests_screen.dart';
 import '../../features/borrowed_books/screens/borrowed_books_screen.dart';
@@ -22,6 +33,7 @@ import '../../features/profile/screens/profile_screen.dart';
 import '../../features/feedback/screens/feedback_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
+import '../../shared/widgets/faculty_bottom_nav.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -46,9 +58,71 @@ class AppRouter {
         path: '/change-password',
         builder: (context, state) => const ChangePasswordScreen(),
       ),
-      GoRoute(
-        path: '/faculty_home',
-        builder: (context, state) => const FacultyHomeScreen(),
+      ShellRoute(
+        builder: (context, state, child) => FacultyShell(child: child),
+        routes: [
+          GoRoute(
+            path: '/faculty_home',
+            builder: (context, state) => const FacultyHomeScreen(),
+          ),
+          GoRoute(
+            path: '/faculty/folders',
+            builder: (context, state) => const MyFoldersScreen(),
+          ),
+          GoRoute(
+            path: '/faculty/create-folder',
+            builder: (context, state) => const CreateFolderScreen(),
+          ),
+          GoRoute(
+            path: '/faculty/folders/details',
+            builder: (context, state) {
+              final folderName = state.uri.queryParameters['name'] ?? 'Folder';
+              return FolderDetailsScreen(folderName: folderName);
+            },
+          ),
+          GoRoute(
+            path: '/faculty/rooms',
+            builder: (context, state) => const MyRoomsScreen(),
+          ),
+          GoRoute(
+            path: '/faculty/create-room',
+            builder: (context, state) => const CreateRoomScreen(),
+          ),
+          GoRoute(
+            path: '/faculty/rooms/details',
+            builder: (context, state) {
+              final roomId = state.uri.queryParameters['id'] ?? 'unknown';
+              return RoomDetailsScreen(roomId: roomId);
+            },
+          ),
+          GoRoute(
+            path: '/faculty/rooms/share',
+            builder: (context, state) => const ShareRoomScreen(),
+          ),
+          GoRoute(
+            path: '/faculty/rooms/manage',
+            builder: (context, state) => const ManageStudentsScreen(),
+          ),
+          GoRoute(
+            path: '/faculty/rooms/add-books',
+            builder: (context, state) => const AddBooksToRoomScreen(),
+          ),
+          GoRoute(
+            path: '/faculty/catalog',
+            builder: (context, state) => const FacultyCatalogScreen(),
+          ),
+          GoRoute(
+            path: '/faculty/book_details',
+            builder: (context, state) {
+              final id = state.uri.queryParameters['id'] ?? '';
+              return FacultyBookDetailsScreen(bookId: id);
+            },
+          ),
+          GoRoute(
+            path: '/faculty/profile',
+            builder: (context, state) => const ProfileScreen(),
+          ),
+        ],
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
@@ -133,6 +207,16 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(body: child, bottomNavigationBar: const FloatingNavBar());
+  }
+}
+
+class FacultyShell extends StatelessWidget {
+  final Widget child;
+  const FacultyShell({required this.child, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: child, bottomNavigationBar: const FacultyFloatingNavBar());
   }
 }
 
