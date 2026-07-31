@@ -733,7 +733,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
           child: Column(
             children: [
               // Title and Settings icon row
@@ -744,34 +744,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Profile',
                     style: GoogleFonts.fraunces(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   GestureDetector(
                     onTap: _showSettingsSheet,
                     child: Container(
-                      width: 38,
-                      height: 38,
+                      width: 34,
+                      height: 34,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.settings_rounded,
                         color: Colors.white,
-                        size: 22,
+                        size: 20,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
               
               // Avatar circle with gold gradient
               Container(
-                width: 84,
-                height: 84,
+                width: 72,
+                height: 72,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -782,8 +782,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Center(
                   child: Container(
-                    width: 78,
-                    height: 78,
+                    width: 66,
+                    height: 66,
                     decoration: const BoxDecoration(
                       color: _inkDeep,
                       shape: BoxShape.circle,
@@ -794,30 +794,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: GoogleFonts.fraunces(
                           color: _gold,
                           fontWeight: FontWeight.w800,
-                          fontSize: 26,
+                          fontSize: 22,
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               
               // Scholar register serif name
               Text(
                 userName,
                 style: GoogleFonts.fraunces(
                   color: Colors.white,
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 email,
                 style: GoogleFonts.publicSans(
                   color: Colors.white.withValues(alpha: 0.6),
-                  fontSize: 13,
+                  fontSize: 12,
                 ),
               ),
             ],
