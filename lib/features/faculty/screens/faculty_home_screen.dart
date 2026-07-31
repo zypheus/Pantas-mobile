@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/book.dart';
 import '../../../services/catalog_service.dart';
+import '../../../services/faculty_classroom_service.dart';
 import '../../../services/user_service.dart';
 import '../../../shared/widgets/section_title.dart';
 import '../../catalog/widgets/book_result_card.dart';
@@ -18,15 +19,61 @@ class FacultyHomeScreen extends StatefulWidget {
 
 class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   final _catalogService = CatalogService();
+  final _classroomService = FacultyClassroomService();
   bool _isLoading = true;
   String? _errorMessage;
   List<Book> _recommendedBooks = const [];
+  // Dynamic stats
+  bool _isStatsLoading = true;
+  int _subjectsCount = 0;
+  int _foldersCount = 0;
+  int _roomsCount = 0;
+  int _sharedBooksCount = 0;
 
   /// Initialize state and load initial recommendations.
   @override
   void initState() {
     super.initState();
     _loadRecommendations();
+    _loadStats();
+  }
+
+  /// Loads dynamic counts for subjects, folders, rooms and shared books.
+  Future<void> _loadStats() async {
+    setState(() {
+      _isStatsLoading = true;
+    });
+
+    try {
+      final rooms = await _classroomService.getClassrooms();
+      final folders = await _classroomService.getFolders();
+
+      // Subjects: unique non-null subject values across classrooms
+      final subjects = <String>{};
+      for (final r in rooms) {
+        if (r.subject != null && r.subject!.isNotEmpty) subjects.add(r.subject!);
+      }
+
+      // Shared books: sum of folder book counts
+      var sharedBooks = 0;
+      for (final f in folders) {
+        sharedBooks += f.bookCount;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _roomsCount = rooms.length;
+        _foldersCount = folders.length;
+        _subjectsCount = subjects.length;
+        _sharedBooksCount = sharedBooks;
+        _isStatsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isStatsLoading = false;
+      });
+    }
   }
 
   /// Loads recommended books for the dashboard. If [refresh] is true, forces reload.
@@ -169,11 +216,11 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
         childAspectRatio: 1.35,
-        children: const [
-          _SummaryCard(label: 'My Subjects', value: '4', icon: Icons.book_rounded),
-          _SummaryCard(label: 'My Folders', value: '12', icon: Icons.folder_rounded),
-          _SummaryCard(label: 'Active Rooms', value: '3', icon: Icons.groups_rounded),
-          _SummaryCard(label: 'Shared Books', value: '24', icon: Icons.menu_book_rounded),
+        children: [
+          _SummaryCard(label: 'My Subjects', value: _isStatsLoading ? '—' : '$_subjectsCount', icon: Icons.book_rounded),
+          _SummaryCard(label: 'My Folders', value: _isStatsLoading ? '—' : '$_foldersCount', icon: Icons.folder_rounded),
+          _SummaryCard(label: 'Active Rooms', value: _isStatsLoading ? '—' : '$_roomsCount', icon: Icons.groups_rounded),
+          _SummaryCard(label: 'Shared Books', value: _isStatsLoading ? '—' : '$_sharedBooksCount', icon: Icons.menu_book_rounded),
         ],
       ),
     );

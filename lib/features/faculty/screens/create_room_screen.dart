@@ -39,13 +39,32 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
       return;
     }
 
-    // If the user is creating a folder, simulate creation and navigate back to folders.
+    // If the user is creating a folder, call the folder creation service.
     if (!_isCreatingRoom) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Folder created.')));
-      // In a real implementation, call folder service to create then navigate.
-      if (!mounted) return;
-      context.go('/faculty/folders');
-      return;
+      setState(() => _saving = true);
+      try {
+        final folder = await _service.createFolder(
+          name: name,
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Folder created.')));
+        // Navigate to the new folder details using its id.
+        context.go('/faculty/folders/details?id=${Uri.encodeComponent(folder.id)}');
+        return;
+      } on ApiException catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.validationSummary)));
+        return;
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to create folder.')));
+        return;
+      } finally {
+        if (mounted) setState(() => _saving = false);
+      }
     }
 
     setState(() => _saving = true);
