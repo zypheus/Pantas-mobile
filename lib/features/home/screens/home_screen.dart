@@ -225,6 +225,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_facultyRecommendations.isNotEmpty) ...[
+                      SectionTitle(
+                        title: 'Recommended books by Faculty',
+                        actionLabel: 'View all',
+                        onAction: () => context.push('/faculty_recommendations'),
+                      ),
+                      const SizedBox(height: 14),
+                      _buildFacultyRecommendationsPreview(context),
+                      const SizedBox(height: 20),
+                    ],
                     if (_recommendations.isNotEmpty ||
                         _isLoadingRecommendations ||
                         _recommendationsError != null) ...[
@@ -235,16 +245,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 14),
                       _buildRecommendationsList(context),
-                      const SizedBox(height: 20),
-                    ],
-                    if (_facultyRecommendations.isNotEmpty) ...[
-                      SectionTitle(
-                        title: 'From your classrooms',
-                        actionLabel: 'View all',
-                        onAction: () => context.push('/faculty_recommendations'),
-                      ),
-                      const SizedBox(height: 14),
-                      _buildFacultyRecommendationsPreview(context),
                       const SizedBox(height: 20),
                     ],
                     SectionTitle(
