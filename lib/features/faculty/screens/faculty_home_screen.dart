@@ -208,14 +208,14 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
   Widget _buildStatsSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: GridView.count(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.35,
+        mainAxisSpacing: 6,
+        crossAxisSpacing: 6,
+        childAspectRatio: 2.4,
         children: [
           _SummaryCard(label: 'My Subjects', value: _isStatsLoading ? '—' : '$_subjectsCount', icon: Icons.book_rounded),
           _SummaryCard(label: 'My Folders', value: _isStatsLoading ? '—' : '$_foldersCount', icon: Icons.folder_rounded),
@@ -345,26 +345,27 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      constraints: const BoxConstraints(minHeight: 84),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(12),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
+            color: Colors.black.withAlpha(4),
+            blurRadius: 6,
+            offset: const Offset(0, 1.5),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.primary, size: 26),
-          const Spacer(),
-          Text(value, style: AppTextStyles.headingMedium.copyWith(fontSize: 24)),
+          Icon(icon, color: AppColors.primary, size: 18),
           const SizedBox(height: 6),
-          Text(label, style: AppTextStyles.bodySmall),
+          Text(value, style: AppTextStyles.headingMedium.copyWith(fontSize: 16)),
+          const SizedBox(height: 2),
+          Text(label, style: AppTextStyles.bodySmall.copyWith(fontSize: 10, color: AppColors.textMuted)),
         ],
       ),
     );
