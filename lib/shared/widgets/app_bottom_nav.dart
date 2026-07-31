@@ -14,11 +14,11 @@ class FloatingNavBar extends StatelessWidget {
   const FloatingNavBar({super.key});
 
   // ───── dimensions ─────
-  static const double _barHeight = 64;
+  static const double _barHeight = 70;
   static const double _fabSize = 56;
   static const double _fabRingWidth = 4;
   static const double _fabOverlap = 16;
-  static const double _iconSize = 23;
+  static const double _iconSize = 22;
 
   // ───── colors ─────
   static const Color _barColor = AppColors.navyBrand;
@@ -34,7 +34,7 @@ class FloatingNavBar extends StatelessWidget {
       color: Colors.transparent,
       padding: EdgeInsets.fromLTRB(20, 0, 20, bottomPad + 14),
       child: SizedBox(
-        height: _barHeight + _fabOverlap,
+        height: _barHeight + _fabOverlap + 20,
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.bottomCenter,
@@ -49,18 +49,18 @@ class FloatingNavBar extends StatelessWidget {
               child: Row(
                 children: [
                   // Left pair
-                  _buildItem(context, 0, Icons.search_rounded, '/search', currentIndex),
-                  _buildItem(context, 1, Icons.library_books_rounded, '/borrowed', currentIndex),
+                  _buildItem(context, 0, Icons.search_rounded, '/search', currentIndex, 'Catalog'),
+                  _buildItem(context, 1, Icons.library_books_rounded, '/borrowed', currentIndex, 'Room'),
                   // Center gap for the FAB
                   const SizedBox(width: 64),
                   // Right pair
-                  _buildItem(context, 3, Icons.chat_bubble_outline_rounded, '/feedback', currentIndex),
-                  _buildItem(context, 4, Icons.person_rounded, '/profile', currentIndex),
+                  _buildItem(context, 3, Icons.chat_bubble_outline_rounded, '/feedback', currentIndex, 'Feedback'),
+                  _buildItem(context, 4, Icons.person_rounded, '/profile', currentIndex, 'Profile'),
                 ],
               ),
             ),
 
-            // ── elevated center home button ──
+            // ── elevated center home button with label ──
             Positioned(
               top: 0,
               child: _buildCenterButton(context, currentIndex == 2),
@@ -77,6 +77,7 @@ class FloatingNavBar extends StatelessWidget {
     IconData icon,
     String route,
     int currentIndex,
+    String label,
   ) {
     final isActive = currentIndex == index;
     final color = isActive ? AppColors.accent : _inactiveIcon;
@@ -90,27 +91,14 @@ class FloatingNavBar extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeInOut,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? AppColors.accent.withValues(alpha: 0.18)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Icon(icon, size: _iconSize, color: color),
-              ),
+              Icon(icon, size: _iconSize, color: color),
               const SizedBox(height: 3),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeInOut,
-                width: isActive ? 5 : 0,
-                height: isActive ? 5 : 0,
-                decoration: const BoxDecoration(
-                  color: AppColors.accent,
-                  shape: BoxShape.circle,
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                  color: color,
                 ),
               ),
             ],
@@ -121,31 +109,45 @@ class FloatingNavBar extends StatelessWidget {
   }
 
   Widget _buildCenterButton(BuildContext context, bool isActive) {
-    return GestureDetector(
-      onTap: () => context.go('/home'),
-      child: Container(
-        width: _fabSize + _fabRingWidth * 2,
-        height: _fabSize + _fabRingWidth * 2,
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          shape: BoxShape.circle,
-        ),
-        child: Center(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: () => context.go('/home'),
           child: Container(
-            width: _fabSize,
-            height: _fabSize,
-            decoration: const BoxDecoration(
-              color: AppColors.accent,
+            width: _fabSize + _fabRingWidth * 2,
+            height: _fabSize + _fabRingWidth * 2,
+            decoration: BoxDecoration(
+              color: AppColors.background,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.home_rounded,
-              size: 28,
-              color: AppColors.navyBrand,
+            child: Center(
+              child: Container(
+                width: _fabSize,
+                height: _fabSize,
+                decoration: const BoxDecoration(
+                  color: AppColors.accent,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.home_rounded,
+                  size: 28,
+                  color: AppColors.navyBrand,
+                ),
+              ),
             ),
           ),
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          'Home',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+            color: isActive ? AppColors.accent : _inactiveIcon,
+          ),
+        ),
+      ],
     );
   }
 
