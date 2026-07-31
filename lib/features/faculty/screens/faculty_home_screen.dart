@@ -213,9 +213,9 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: 2,
-        mainAxisSpacing: 6,
-        crossAxisSpacing: 6,
-        childAspectRatio: 2.4,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 1.85,
         children: [
           _SummaryCard(label: 'My Subjects', value: _isStatsLoading ? '—' : '$_subjectsCount', icon: Icons.book_rounded),
           _SummaryCard(label: 'My Folders', value: _isStatsLoading ? '—' : '$_foldersCount', icon: Icons.folder_rounded),
@@ -287,7 +287,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     }
 
     return SizedBox(
-      height: 260,
+      height: 240,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         scrollDirection: Axis.horizontal,
@@ -301,7 +301,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
             ),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
+        separatorBuilder: (_, _) => const SizedBox(width: 14),
         itemCount: _recommendedBooks.length,
       ),
     );
@@ -345,8 +345,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 84),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(12),
@@ -360,12 +359,29 @@ class _SummaryCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: AppColors.primary, size: 18),
           const SizedBox(height: 6),
-          Text(value, style: AppTextStyles.headingMedium.copyWith(fontSize: 16)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: AppTextStyles.headingMedium.copyWith(fontSize: 16),
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label, style: AppTextStyles.bodySmall.copyWith(fontSize: 10, color: AppColors.textMuted)),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodySmall.copyWith(
+              fontSize: 10,
+              color: AppColors.textMuted,
+            ),
+          ),
         ],
       ),
     );
@@ -388,8 +404,8 @@ class _ActionTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 96,
-        padding: const EdgeInsets.all(16),
+        height: 104,
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(20),
@@ -405,20 +421,23 @@ class _ActionTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: AppColors.accent.withAlpha(32),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: AppColors.accent),
+              child: Icon(icon, color: AppColors.accent, size: 20),
             ),
             const Spacer(),
             Text(
               label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
+                height: 1.2,
               ),
             ),
           ],

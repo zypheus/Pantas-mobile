@@ -15,7 +15,7 @@ class BookResultCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 160,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(20),
@@ -36,7 +36,7 @@ class BookResultCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               child: _BookCover(coverUrl: book.coverImage),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               book.title,
               maxLines: 2,
@@ -44,25 +44,31 @@ class BookResultCard extends StatelessWidget {
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
-                height: 1.3,
+                height: 1.25,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               book.author,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 11,
+                height: 1.2,
+              ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                StatusBadge(
-                  label: book.availability,
-                  color: book.isAvailable
-                      ? AppColors.success
-                      : AppColors.warning,
+                Flexible(
+                  child: StatusBadge(
+                    label: book.availability,
+                    color: book.isAvailable
+                        ? AppColors.success
+                        : AppColors.warning,
+                  ),
                 ),
                 const Icon(
                   Icons.chevron_right_rounded,

@@ -85,7 +85,7 @@ class _FacultyRecommendationsScreenState
                               ),
                             const SizedBox(height: 10),
                             SizedBox(
-                              height: 220,
+                              height: 240,
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: group.books.length,
