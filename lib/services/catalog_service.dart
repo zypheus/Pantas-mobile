@@ -80,17 +80,23 @@ class CatalogService {
 
   Future<List<Book>> getNewArrivals({
     int limit = 12,
+    String? course,
     bool refresh = false,
   }) async {
+    final queryParameters = {
+      'limit': limit,
+      'course': course,
+    }..removeWhere((_, value) => value == null || value == '');
+
     return _cache.getOrFetch<List<Book>>(
-      'catalog:new-arrivals:$limit',
+      _cacheKey('catalog:new-arrivals', queryParameters),
       ttl: _newArrivalsTtl,
       refresh: refresh,
       fetch: () async {
         final response = await _apiClient.get(
           '/catalog/new-arrivals',
           authenticated: false,
-          queryParameters: {'limit': limit},
+          queryParameters: queryParameters,
         );
 
         final data = response['data'];

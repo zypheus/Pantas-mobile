@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../models/book.dart';
 import '../../../services/catalog_service.dart';
+import '../../../services/user_service.dart';
 import '../widgets/book_result_card.dart';
 import '../../catalog/widgets/catalog_filter_sheet.dart';
 
@@ -18,8 +19,13 @@ class CatalogSearchScreen extends StatefulWidget {
 
 class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
   final _catalogService = CatalogService();
+  final _userService = UserService();
   final TextEditingController _searchController = TextEditingController();
   int _selectedSegment = 0;
+  String? _courseFilter;
+  bool _showAllCourses = false;
+  String? _selectedContentType;
+  String? _selectedSection;
   List<Book> _results = const [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -29,7 +35,7 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
   @override
   void initState() {
     super.initState();
-    _loadInitialResults();
+    _loadCourseFilterAndInitialResults();
   }
 
   @override
@@ -37,6 +43,20 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
     _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadCourseFilterAndInitialResults() async {
+    try {
+      final user = await _userService.getCurrentUser();
+      if (!mounted) return;
+      setState(() {
+        _courseFilter = user?.course;
+      });
+    } catch (_) {
+      // Ignore profile load failure; search still works without a course filter.
+    }
+
+    await _loadInitialResults();
   }
 
   Future<void> _loadInitialResults({bool refresh = false}) async {
@@ -47,10 +67,14 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
     });
 
     try {
-      final results = await _catalogService.getNewArrivals(
-        limit: 20,
-        refresh: refresh,
-      );
+      final results = !_showAllCourses && _courseFilter != null
+          ? await _loadCourseRecommendations(refresh: refresh)
+          : await _catalogService.getNewArrivals(
+              limit: 20,
+              course: _showAllCourses ? null : _courseFilter,
+              refresh: refresh,
+            );
+
       if (!mounted || requestId != _searchRequestId) return;
       setState(() {
         _results = results;
@@ -62,6 +86,57 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
         _errorMessage = 'Unable to load catalog.';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<List<Book>> _loadCourseRecommendations({bool refresh = false}) async {
+    try {
+      final overview = await _catalogService.getHomeOverview(refresh: refresh);
+      if (overview.recommendedBooks.isNotEmpty) {
+        return overview.recommendedBooks;
+      }
+    } catch (_) {
+      // Fallback to course-specific new arrivals when home recommendations fail.
+    }
+
+    return _catalogService.getNewArrivals(
+      limit: 20,
+      course: _courseFilter,
+      refresh: refresh,
+    );
+  }
+
+  String _buildEffectiveSearchQuery() {
+    final query = _searchController.text.trim();
+    if (query.isEmpty || _showAllCourses || _courseFilter == null) {
+      return query;
+    }
+
+    final lowerQuery = query.toLowerCase();
+    final lowerCourse = _courseFilter!.toLowerCase();
+    final courseTerms = <String>[];
+
+    if (!lowerQuery.contains(lowerCourse)) {
+      courseTerms.add(_courseFilter!);
+    }
+    if (lowerCourse.contains('nurs') &&
+        !lowerQuery.contains('nurse') &&
+        !lowerQuery.contains('nursing')) {
+      courseTerms.addAll(['nursing', 'nurse']);
+    }
+
+    if (courseTerms.isEmpty) {
+      return query;
+    }
+
+    return '$query ${courseTerms.join(' ')}';
+  }
+
+  Future<void> _updateSearchWithCourseFilter() async {
+    if (_searchController.text.trim().isNotEmpty || _selectedSegment != 0) {
+      await _searchCatalog();
+    } else {
+      await _loadInitialResults();
     }
   }
 
@@ -79,8 +154,10 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
 
     try {
       final results = await _catalogService.searchBooks(
-        _searchController.text,
-        format: _selectedSegment == 1 ? 'ebooks' : null,
+        _buildEffectiveSearchQuery(),
+        format: _selectedContentType ?? (_selectedSegment == 1 ? 'ebooks' : null),
+        section: _selectedSection,
+        course: _showAllCourses ? null : _courseFilter,
         perPage: 20,
         refresh: refresh,
       );
@@ -170,7 +247,9 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
                       child: TextField(
                         controller: _searchController,
                         style: const TextStyle(color: Colors.white),
+                        textInputAction: TextInputAction.search,
                         onChanged: (_) => _scheduleSearch(),
+                        onSubmitted: (_) => _searchCatalog(),
                         decoration: InputDecoration(
                           hintText: 'Search…',
                           hintStyle: TextStyle(
@@ -181,19 +260,37 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
                             color: Colors.white.withValues(alpha: 0.55),
                             size: 20,
                           ),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? GestureDetector(
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_searchController.text.isNotEmpty)
+                                GestureDetector(
                                   onTap: () {
                                     _searchController.clear();
                                     _loadInitialResults();
                                   },
-                                  child: Icon(
-                                    Icons.close_rounded,
-                                    color: Colors.white.withValues(alpha: 0.55),
-                                    size: 18,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                    child: Icon(
+                                      Icons.close_rounded,
+                                      color: Colors.white.withValues(alpha: 0.55),
+                                      size: 18,
+                                    ),
                                   ),
-                                )
-                              : null,
+                                ),
+                              GestureDetector(
+                                onTap: _searchCatalog,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: Icon(
+                                    Icons.arrow_forward_rounded,
+                                    color: Colors.white.withValues(alpha: 0.55),
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                           filled: false,
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
@@ -209,7 +306,15 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
                     onTap: () => showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
-                      builder: (_) => const CatalogFilterSheet(),
+                      builder: (_) => CatalogFilterSheet(
+                        onApply: (contentType, section) {
+                          setState(() {
+                            _selectedContentType = contentType;
+                            _selectedSection = section;
+                          });
+                          _searchCatalog();
+                        },
+                      ),
                     ),
                     child: Container(
                       width: 48,
@@ -252,6 +357,49 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _FilterChip(
+                      label: 'My Course',
+                      isSelected: !_showAllCourses,
+                      onTap: () {
+                        setState(() {
+                          _showAllCourses = false;
+                        });
+                        _updateSearchWithCourseFilter();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _FilterChip(
+                      label: 'All Books',
+                      isSelected: _showAllCourses,
+                      onTap: () {
+                        setState(() {
+                          _showAllCourses = true;
+                        });
+                        _updateSearchWithCourseFilter();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              if (!_showAllCourses)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    _courseFilter != null
+                        ? 'Showing books for $_courseFilter'
+                        : 'Showing books for My Course',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
               const SizedBox(height: 4),
             ],
           ),
@@ -406,6 +554,49 @@ class _SegmentChip extends StatelessWidget {
             color: isSelected
                 ? AppColors.primary
                 : Colors.white.withValues(alpha: 0.7),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.white
+              : Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: isSelected ? 0.7 : 0.18),
+          ),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            color: isSelected
+                ? AppColors.primary
+                : Colors.white.withValues(alpha: 0.75),
           ),
         ),
       ),
