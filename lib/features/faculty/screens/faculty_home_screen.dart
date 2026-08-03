@@ -193,14 +193,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               height: 1.1,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Here’s an overview of your teaching resources.',
-            style: TextStyle(
-              color: Colors.white.withAlpha(220),
-              fontSize: 14,
-            ),
-          ),
         ],
       ),
     );
