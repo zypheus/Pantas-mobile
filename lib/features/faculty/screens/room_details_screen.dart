@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/assignment.dart';
 import '../../../models/classroom.dart';
+import '../../../services/assignment_service.dart';
 import '../../../services/faculty_classroom_service.dart';
 
 class RoomDetailsScreen extends StatefulWidget {
@@ -112,6 +114,20 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                             '/faculty/rooms/add-books?id=${room.id}',
                           ),
                         ),
+                        _ActionTile(
+                          icon: Icons.assignment_rounded,
+                          title: 'Create assignment',
+                          onTap: () => context.push(
+                            '/faculty/assignments/create?classroomId=${Uri.encodeComponent(room.id)}',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Assignments',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+                        _AssignmentsPreview(classroomId: room.id),
                         const SizedBox(height: 16),
                         const Text(
                           'Shared folders',
@@ -161,6 +177,77 @@ class _ActionTile extends StatelessWidget {
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
       ),
+    );
+  }
+}
+
+class _AssignmentsPreview extends StatefulWidget {
+  final String classroomId;
+  const _AssignmentsPreview({required this.classroomId});
+
+  @override
+  State<_AssignmentsPreview> createState() => _AssignmentsPreviewState();
+}
+
+class _AssignmentsPreviewState extends State<_AssignmentsPreview> {
+  final _service = AssignmentService();
+  List<AssignmentSummary> _items = const [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final items =
+          await _service.listFacultyAssignments(widget.classroomId);
+      if (!mounted) return;
+      setState(() {
+        _items = items;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_items.isEmpty) {
+      return const Text(
+        'No assignments yet.',
+        style: TextStyle(color: AppColors.textMuted),
+      );
+    }
+    return Column(
+      children: _items
+          .take(5)
+          .map(
+            (a) => ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.assignment_outlined),
+              title: Text(a.title),
+              subtitle: Text(
+                a.dueAt == null
+                    ? '${a.completedCount}/${a.totalSubmissions} completed'
+                    : 'Due ${a.dueAt!.month}/${a.dueAt!.day} · ${a.completedCount}/${a.totalSubmissions} done',
+              ),
+              onTap: () => context.push(
+                '/faculty/assignments/details?id=${Uri.encodeComponent(a.id)}',
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 }
