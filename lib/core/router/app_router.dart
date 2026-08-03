@@ -6,7 +6,7 @@ import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/faculty/screens/faculty_home_screen.dart';
 import '../../features/faculty/screens/my_folders_screen.dart';
-import '../../features/faculty/screens/create_folder_screen.dart';
+import '../../features/faculty/screens/faculty_create_screen.dart';
 import '../../features/faculty/screens/folder_details_screen.dart';
 import '../../features/faculty/screens/my_rooms_screen.dart';
 import '../../features/faculty/screens/create_room_screen.dart';
@@ -75,8 +75,16 @@ class AppRouter {
             builder: (context, state) => const MyFoldersScreen(),
           ),
           GoRoute(
+            path: '/faculty/create',
+            builder: (context, state) => const FacultyCreateScreen(),
+          ),
+          GoRoute(
             path: '/faculty/create-folder',
-            builder: (context, state) => const CreateFolderScreen(),
+            builder: (context, state) => const CreateRoomScreen(initialMode: CreateMode.folder),
+          ),
+          GoRoute(
+            path: '/faculty/create-room',
+            builder: (context, state) => const CreateRoomScreen(initialMode: CreateMode.room),
           ),
           GoRoute(
             path: '/faculty/folders/details',
@@ -88,10 +96,6 @@ class AppRouter {
           GoRoute(
             path: '/faculty/rooms',
             builder: (context, state) => const MyRoomsScreen(),
-          ),
-          GoRoute(
-            path: '/faculty/create-room',
-            builder: (context, state) => const CreateRoomScreen(),
           ),
           GoRoute(
             path: '/faculty/rooms/details',
