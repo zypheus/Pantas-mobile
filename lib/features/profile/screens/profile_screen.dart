@@ -688,6 +688,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
 
                     PantasProfileTile(
+                      icon: Icons.assignment_outlined,
+                      title: 'Assignments',
+                      subtitle: 'Classroom activities and due work',
+                      onTap: () => context.push('/assignments'),
+                    ),
+
+                    PantasProfileTile(
                       icon: Icons.class_rounded,
                       title: 'My classrooms',
                       subtitle: 'View joined faculty classrooms',

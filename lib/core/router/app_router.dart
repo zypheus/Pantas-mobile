@@ -14,6 +14,8 @@ import '../../features/faculty/screens/room_details_screen.dart';
 import '../../features/faculty/screens/share_room_screen.dart';
 import '../../features/faculty/screens/manage_students_screen.dart';
 import '../../features/faculty/screens/add_books_to_room_screen.dart';
+import '../../features/faculty/screens/create_assignment_screen.dart';
+import '../../features/faculty/screens/faculty_assignment_detail_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../services/user_service.dart';
 import '../../features/catalog/screens/catalog_search_screen.dart';
@@ -28,7 +30,9 @@ import '../../features/borrowed_books/screens/borrowed_books_screen.dart';
 import '../../features/classrooms/screens/classroom_detail_screen.dart';
 import '../../features/classrooms/screens/faculty_recommendations_screen.dart';
 import '../../features/classrooms/screens/join_classroom_screen.dart';
+import '../../features/classrooms/screens/my_assignments_screen.dart';
 import '../../features/classrooms/screens/my_classrooms_screen.dart';
+import '../../features/classrooms/screens/student_assignment_detail_screen.dart';
 import '../../features/rooms/screens/room_reservation_screen.dart';
 import '../../features/rooms/screens/room_reservation_details_screen.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
@@ -126,6 +130,21 @@ class AppRouter {
             },
           ),
           GoRoute(
+            path: '/faculty/assignments/create',
+            builder: (context, state) {
+              final classroomId =
+                  state.uri.queryParameters['classroomId'] ?? '';
+              return CreateAssignmentScreen(classroomId: classroomId);
+            },
+          ),
+          GoRoute(
+            path: '/faculty/assignments/details',
+            builder: (context, state) {
+              final id = state.uri.queryParameters['id'] ?? '';
+              return FacultyAssignmentDetailScreen(assignmentId: id);
+            },
+          ),
+          GoRoute(
             path: '/faculty/catalog',
             builder: (context, state) {
               final folderId = state.uri.queryParameters['folderId'];
@@ -214,6 +233,17 @@ class AppRouter {
         builder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
           return ClassroomDetailScreen(classroomId: id);
+        },
+      ),
+      GoRoute(
+        path: '/assignments',
+        builder: (context, state) => const MyAssignmentsScreen(),
+      ),
+      GoRoute(
+        path: '/assignments/details',
+        builder: (context, state) {
+          final id = state.uri.queryParameters['id'] ?? '';
+          return StudentAssignmentDetailScreen(assignmentId: id);
         },
       ),
       GoRoute(

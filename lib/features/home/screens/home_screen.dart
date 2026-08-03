@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/assignment.dart';
 import '../../../models/book.dart';
 import '../../../models/classroom.dart';
+import '../../../services/assignment_service.dart';
 import '../../../services/catalog_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/user_service.dart';
@@ -20,9 +22,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final _catalogService = CatalogService();
   final _userService = UserService();
   final _notificationService = NotificationService();
+  final _assignmentService = AssignmentService();
   List<Book> _newArrivals = const [];
   List<Book> _recommendations = const [];
   List<FacultyRecommendationGroup> _facultyRecommendations = const [];
+  List<AssignmentSummary> _openAssignments = const [];
   String? _recommendationLabel;
   bool _isLoadingNewArrivals = true;
   bool _isLoadingRecommendations = true;
@@ -111,6 +115,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoadingRecommendations = false;
       });
 
+      _loadOpenAssignments();
+
       if (_recommendationLabel == null) {
         await _loadRecommendationLabelFallback();
       }
@@ -125,6 +131,20 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoadingNewArrivals = false;
         _isLoadingRecommendations = false;
       });
+    }
+  }
+
+  Future<void> _loadOpenAssignments() async {
+    try {
+      final items = await _assignmentService.listMyAssignments();
+      if (!mounted) return;
+      setState(() {
+        _openAssignments = items
+            .where((a) => a.mySubmission?.status != 'completed')
+            .toList(growable: false);
+      });
+    } catch (_) {
+      // Assignments section stays hidden on failure.
     }
   }
 
@@ -195,6 +215,37 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_openAssignments.isNotEmpty) ...[
+                      SectionTitle(
+                        title: 'Assignments',
+                        actionLabel: 'View all',
+                        onAction: () => context.push('/assignments'),
+                      ),
+                      const SizedBox(height: 10),
+                      ..._openAssignments.take(3).map(
+                        (a) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.assignment_outlined),
+                            title: Text(a.title),
+                            subtitle: Text(
+                              [
+                                if (a.classroomName != null) a.classroomName!,
+                                if (a.dueAt != null)
+                                  'Due ${a.dueAt!.month}/${a.dueAt!.day}',
+                                a.mySubmission?.status ?? 'assigned',
+                              ].join(' · '),
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => context.push(
+                              '/assignments/details?id=${Uri.encodeComponent(a.id)}',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     if (_facultyRecommendations.isNotEmpty) ...[
                       SectionTitle(
                         title: 'Recommended books by Faculty',
