@@ -771,28 +771,35 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () => context.go('/search'),
             child: Container(
               width: double.infinity,
-              height: 48,
+              height: 50,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(14),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
+                  color: Colors.white.withValues(alpha: 0.6),
                   width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.search_rounded,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: AppColors.navyBrand,
                     size: 22,
                   ),
                   const SizedBox(width: 12),
-                  Text(
+                  const Text(
                     'Search books, authors...',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
+                      color: AppColors.textMuted,
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
                     ),

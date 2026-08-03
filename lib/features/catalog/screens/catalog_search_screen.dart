@@ -238,26 +238,33 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(14),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.18),
+                          color: Colors.white.withValues(alpha: 0.6),
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: TextField(
                         controller: _searchController,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppColors.textPrimary),
                         textInputAction: TextInputAction.search,
                         onChanged: (_) => _scheduleSearch(),
                         onSubmitted: (_) => _searchCatalog(),
                         decoration: InputDecoration(
                           hintText: 'Search…',
-                          hintStyle: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.45),
+                          hintStyle: const TextStyle(
+                            color: AppColors.textMuted,
                           ),
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             Icons.search_rounded,
-                            color: Colors.white.withValues(alpha: 0.55),
+                            color: AppColors.navyBrand,
                             size: 20,
                           ),
                           suffixIcon: Row(
@@ -273,7 +280,7 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
                                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                     child: Icon(
                                       Icons.close_rounded,
-                                      color: Colors.white.withValues(alpha: 0.55),
+                                      color: AppColors.textMuted,
                                       size: 18,
                                     ),
                                   ),
@@ -284,7 +291,7 @@ class _CatalogSearchScreenState extends State<CatalogSearchScreen> {
                                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                   child: Icon(
                                     Icons.arrow_forward_rounded,
-                                    color: Colors.white.withValues(alpha: 0.55),
+                                    color: AppColors.navyBrand,
                                     size: 20,
                                   ),
                                 ),
