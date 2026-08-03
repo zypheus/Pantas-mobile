@@ -25,18 +25,29 @@ class FacultyCreateScreen extends StatelessWidget {
             style: AppTextStyles.bodyMedium,
           ),
           const SizedBox(height: 24),
-          _CreateOptionCard(
-            title: 'Create Room',
-            subtitle: 'Manage classrooms and students',
-            icon: Icons.group_add_rounded,
-            onTap: () => context.push('/faculty/create-room'),
-          ),
-          const SizedBox(height: 16),
-          _CreateOptionCard(
-            title: 'Create Folder',
-            subtitle: 'Book lists and recommendations',
-            icon: Icons.create_new_folder_rounded,
-            onTap: () => context.push('/faculty/create-folder'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _CreateOptionCard(
+                    title: 'Create Room',
+                    subtitle: 'Manage classrooms and students',
+                    icon: Icons.group_add_rounded,
+                    onTap: () => context.push('/faculty/create-room'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _CreateOptionCard(
+                    title: 'Create Folder',
+                    subtitle: 'Book lists and recommendations',
+                    icon: Icons.create_new_folder_rounded,
+                    onTap: () => context.push('/faculty/create-folder'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -61,44 +72,48 @@ class _CreateOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.14),
-                borderRadius: BorderRadius.circular(16),
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
-              child: Icon(icon, color: AppColors.primary, size: 26),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: AppTextStyles.headingMedium.copyWith(fontSize: 16)),
-                  const SizedBox(height: 6),
-                  Text(subtitle, style: AppTextStyles.bodySmall),
-                ],
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 22),
               ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
-          ],
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: AppTextStyles.headingMedium.copyWith(fontSize: 15),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: AppTextStyles.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );

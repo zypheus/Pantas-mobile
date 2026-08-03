@@ -204,10 +204,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       child: GridView.count(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
+        crossAxisCount: 4,
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
-        childAspectRatio: 1.6,
+        childAspectRatio: 1,
         children: [
           _SummaryCard(label: 'My Subjects', value: _isStatsLoading ? '—' : '$_subjectsCount', icon: Icons.book_rounded),
           _SummaryCard(label: 'My Folders', value: _isStatsLoading ? '—' : '$_foldersCount', icon: Icons.folder_rounded),
@@ -223,10 +223,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isNarrow = constraints.maxWidth < 580;
-          final itemWidth = isNarrow
-              ? constraints.maxWidth
-              : (constraints.maxWidth - 24) / 3;
+          final itemWidth = (constraints.maxWidth - 24) / 3;
 
           return Wrap(
             spacing: 12,
@@ -313,21 +310,25 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
   Widget _buildShortcutCards(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 50),
+      child: Row(
         children: [
-          _ShortcutCard(
-            title: 'My Folders',
-            subtitle: 'Organize books by subject or lesson',
-            icon: Icons.folder_rounded,
-            onTap: () => context.go('/faculty/folders'),
+          Expanded(
+            child: _ShortcutCard(
+              title: 'My Folders',
+              subtitle: 'Organize books by subject or lesson',
+              icon: Icons.folder_rounded,
+              onTap: () => context.go('/faculty/folders'),
+            ),
           ),
-          const SizedBox(height: 12),
-          _ShortcutCard(
-            title: 'My Rooms',
-            subtitle: 'Manage classrooms and share resources',
-            icon: Icons.groups_rounded,
-            onTap: () => context.go('/faculty/rooms'),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _ShortcutCard(
+              title: 'My Rooms',
+              subtitle: 'Manage classrooms and share resources',
+              icon: Icons.groups_rounded,
+              onTap: () => context.go('/faculty/rooms'),
+            ),
           ),
         ],
       ),
@@ -349,7 +350,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14),
@@ -362,26 +363,24 @@ class _SummaryCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: AppColors.primary, size: 18),
-          const SizedBox(height: 6),
+          Icon(icon, color: AppColors.primary, size: 22),
+          const SizedBox(height: 8),
           FittedBox(
             fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
             child: Text(
               value,
               maxLines: 1,
-              style: AppTextStyles.headingMedium.copyWith(fontSize: 16),
+              style: AppTextStyles.headingMedium.copyWith(fontSize: 18),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: AppTextStyles.bodySmall.copyWith(
               fontSize: 10,
               color: AppColors.textMuted,
@@ -408,44 +407,47 @@ class _ActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 104,
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(8),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.accent.withAlpha(32),
-                shape: BoxShape.circle,
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(8),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
-              child: Icon(icon, color: AppColors.accent, size: 20),
-            ),
-            const Spacer(),
-            Text(
-              label,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-                height: 1.2,
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withAlpha(32),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: AppColors.accent, size: 20),
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -469,38 +471,41 @@ class _ShortcutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withAlpha(16),
-                borderRadius: BorderRadius.circular(14),
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(16),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 22),
               ),
-              child: Icon(icon, color: AppColors.primary),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: AppTextStyles.headingMedium.copyWith(fontSize: 16)),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: AppTextStyles.bodySmall),
-                ],
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: AppTextStyles.headingMedium.copyWith(fontSize: 15),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: AppTextStyles.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
