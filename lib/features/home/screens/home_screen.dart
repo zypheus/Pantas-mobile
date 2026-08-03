@@ -37,12 +37,15 @@ class _HomeScreenState extends State<HomeScreen> {
   int _recommendationCurrentPage = 0;
   final _newArrivalsScrollController = ScrollController();
   int _newArrivalsCurrentPage = 0;
+  final _facultyScrollController = ScrollController();
+  int _facultyCurrentPage = 0;
 
   @override
   void initState() {
     super.initState();
     _recommendationScrollController.addListener(_onRecommendationScroll);
     _newArrivalsScrollController.addListener(_onNewArrivalsScroll);
+    _facultyScrollController.addListener(_onFacultyScroll);
     _loadHomeOverview();
   }
 
@@ -52,6 +55,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _recommendationScrollController.dispose();
     _newArrivalsScrollController.removeListener(_onNewArrivalsScroll);
     _newArrivalsScrollController.dispose();
+    _facultyScrollController.removeListener(_onFacultyScroll);
+    _facultyScrollController.dispose();
     super.dispose();
   }
 
@@ -79,6 +84,23 @@ class _HomeScreenState extends State<HomeScreen> {
     if (clamped != _newArrivalsCurrentPage) {
       setState(() {
         _newArrivalsCurrentPage = clamped;
+      });
+    }
+  }
+
+  void _onFacultyScroll() {
+    if (_facultyRecommendations.isEmpty) return;
+    final first = _facultyRecommendations.first;
+    final books = first.books.take(8).toList(growable: false);
+    if (books.isEmpty) return;
+    final position = _facultyScrollController.position;
+    const cardStep = 174.0;
+    final viewportCenter = position.pixels + position.viewportDimension / 2;
+    final index = (viewportCenter / cardStep).round();
+    final clamped = index.clamp(0, books.length - 1);
+    if (clamped != _facultyCurrentPage) {
+      setState(() {
+        _facultyCurrentPage = clamped;
       });
     }
   }
@@ -249,8 +271,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (_facultyRecommendations.isNotEmpty) ...[
                       SectionTitle(
                         title: 'Recommended books by Faculty',
-                        actionLabel: 'View all',
-                        onAction: () => context.push('/faculty_recommendations'),
                       ),
                       const SizedBox(height: 14),
                       _buildFacultyRecommendationsPreview(context),
@@ -261,8 +281,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         _recommendationsError != null) ...[
                       SectionTitle(
                         title: _recommendationsTitle,
-                        actionLabel: 'View all',
-                        onAction: () => context.go('/search'),
                       ),
                       const SizedBox(height: 14),
                       _buildRecommendationsList(context),
@@ -270,8 +288,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                     SectionTitle(
                       title: 'New Arrivals',
-                      actionLabel: 'View all',
-                      onAction: () => context.go('/search'),
                     ),
                     const SizedBox(height: 14),
                     _buildNewArrivalsList(context),
@@ -335,7 +351,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        _buildNewArrivalsDots(),
+        _buildCarouselFooter(
+          dots: _buildNewArrivalsDots(),
+          onViewAll: () => context.go('/search'),
+        ),
       ],
     );
   }
@@ -381,7 +400,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        _buildRecommendationDots(),
+        _buildCarouselFooter(
+          dots: _buildRecommendationDots(),
+          onViewAll: () => context.go('/search'),
+        ),
       ],
     );
   }
@@ -405,6 +427,24 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildCarouselFooter({
+    required Widget dots,
+    required VoidCallback onViewAll,
+  }) {
+    return Column(
+      children: [
+        Center(
+          child: TextButton(
+            onPressed: onViewAll,
+            child: const Text('View all'),
+          ),
+        ),
+        const SizedBox(height: 4),
+        dots,
+      ],
     );
   }
 
@@ -432,6 +472,7 @@ class _HomeScreenState extends State<HomeScreen> {
         SizedBox(
           height: 230,
           child: ListView.separated(
+            controller: _facultyScrollController,
             scrollDirection: Axis.horizontal,
             itemCount: books.length,
             separatorBuilder: (_, _) => const SizedBox(width: 12),
@@ -444,7 +485,36 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
+        const SizedBox(height: 12),
+        _buildCarouselFooter(
+          dots: _buildFacultyDots(),
+          onViewAll: () => context.push('/faculty_recommendations'),
+        ),
       ],
+    );
+  }
+
+  Widget _buildFacultyDots() {
+    final first = _facultyRecommendations.first;
+    final books = first.books.take(8).toList(growable: false);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(books.length, (index) {
+        final isActive = index == _facultyCurrentPage;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: isActive ? 24 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: isActive
+                ? const Color(0xFFFFCC00)
+                : const Color(0xFF0B1740).withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
     );
   }
 
