@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../models/attendance_visit.dart';
 import '../../../models/borrowed_book.dart';
@@ -570,7 +571,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        backgroundColor: _paper,
+        backgroundColor: AppColors.background,
         body: SkeletonPage(
           children: [
             SkeletonCard(
@@ -618,7 +619,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         .join();
 
     return Scaffold(
-      backgroundColor: _paper,
+      backgroundColor: AppColors.background,
       body: RefreshIndicator(
         onRefresh: () => _loadAll(refresh: true),
         color: _gold,

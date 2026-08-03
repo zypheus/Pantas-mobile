@@ -164,7 +164,7 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 15,
+                        fontSize: 24,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
