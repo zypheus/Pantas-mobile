@@ -77,7 +77,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.heroGradient),
+        color: Colors.white,
         child: SafeArea(
           child: Center(
             child: AnimatedBuilder(
@@ -119,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
                         child: const Text(
                           'PANTAS',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.primary,
                             fontSize: 38,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 4,
@@ -132,7 +132,7 @@ class _SplashScreenState extends State<SplashScreen>
                         child: Text(
                           'Library Management System',
                           style: TextStyle(
-                            color: const Color.fromARGB(255, 238, 231, 231).withValues(alpha: 0.6),
+                            color: AppColors.textSecondary.withValues(alpha: 0.8),
                             fontSize: 14,
                             letterSpacing: 0.5,
                           ),
