@@ -103,30 +103,83 @@ class _StudentAssignmentDetailScreenState
                   padding: const EdgeInsets.all(20),
                   children: [
                     if (assignment.classroomName != null)
-                      Text(
-                        assignment.classroomName!,
-                        style: const TextStyle(color: AppColors.textMuted),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.school_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              assignment.classroomName!,
+                              style: const TextStyle(color: AppColors.textMuted),
+                            ),
+                          ),
+                        ],
                       ),
                     if (assignment.dueAt != null) ...[
                       const SizedBox(height: 4),
-                      Text(
-                        'Due ${_formatDate(assignment.dueAt!)}',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.event_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Due ${_formatDate(assignment.dueAt!)}',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ],
                       ),
                     ],
                     const SizedBox(height: 8),
-                    Text(
-                      'Status: $status',
-                      style: const TextStyle(color: AppColors.textSecondary),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.flag_rounded,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Status: $status',
+                          style: const TextStyle(color: AppColors.textSecondary),
+                        ),
+                      ],
                     ),
                     if (assignment.instructions != null) ...[
                       const SizedBox(height: 16),
-                      Text(assignment.instructions!),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.notes_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(assignment.instructions!)),
+                        ],
+                      ),
                     ],
                     const SizedBox(height: 16),
-                    const Text(
-                      'Books',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.menu_book_rounded,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Books',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ],
                     ),
                     if (assignment.books.isEmpty)
                       const Padding(
@@ -140,18 +193,47 @@ class _StudentAssignmentDetailScreenState
                       ...assignment.books.map(
                         (book) => ListTile(
                           contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.menu_book_rounded),
-                          title: Text(book.title),
+                          leading: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.menu_book_rounded,
+                              color: AppColors.primary,
+                              size: 22,
+                            ),
+                          ),
+                          title: Text(
+                            book.title,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
                           subtitle: Text(book.author),
+                          trailing: const Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColors.textMuted,
+                          ),
                           onTap: () => context.push(
                             '/book_details?id=${Uri.encodeComponent(book.id)}',
                           ),
                         ),
                       ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Your response (optional)',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.edit_note_rounded,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Your response (optional)',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     TextField(

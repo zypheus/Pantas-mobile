@@ -66,7 +66,22 @@ class _MyAssignmentsScreenState extends State<MyAssignmentsScreen> {
                         final item = _items[index];
                         return Card(
                           child: ListTile(
-                            title: Text(item.title),
+                            leading: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.assignment_rounded,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            title: Text(
+                              item.title,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
                             subtitle: Text(
                               [
                                 if (item.classroomName != null) item.classroomName!,
@@ -75,7 +90,10 @@ class _MyAssignmentsScreenState extends State<MyAssignmentsScreen> {
                                 item.mySubmission?.status ?? 'assigned',
                               ].join(' · '),
                             ),
-                            trailing: const Icon(Icons.chevron_right),
+                            trailing: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textMuted,
+                            ),
                             onTap: () => context.push(
                               '/assignments/details?id=${Uri.encodeComponent(item.id)}',
                             ),
