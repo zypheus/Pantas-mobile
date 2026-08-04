@@ -321,7 +321,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           Expanded(
             child: _ShortcutCard(
               title: 'My Folders',
-              subtitle: 'Organize books by subject or lesson',
+              subtitle: 'Organize books by subject',
               icon: Icons.folder_rounded,
               onTap: () => context.go('/faculty/folders'),
             ),
@@ -330,7 +330,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           Expanded(
             child: _ShortcutCard(
               title: 'My Rooms',
-              subtitle: 'Manage classrooms and share resources',
+              subtitle: 'Manage classrooms',
               icon: Icons.groups_rounded,
               onTap: () => context.go('/faculty/rooms'),
             ),
@@ -503,16 +503,24 @@ class _ShortcutCard extends StatelessWidget {
                 child: Icon(icon, color: AppColors.primary, size: 22),
               ),
               const SizedBox(height: 10),
-              Text(
-                title,
-                style: AppTextStyles.headingMedium.copyWith(fontSize: 15),
-                textAlign: TextAlign.center,
+              Flexible(
+                child: Text(
+                  title,
+                  style: AppTextStyles.headingMedium.copyWith(fontSize: 15),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: AppTextStyles.bodySmall,
-                textAlign: TextAlign.center,
+              Flexible(
+                child: Text(
+                  subtitle,
+                  style: AppTextStyles.bodySmall,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),

@@ -91,9 +91,9 @@ class _MyRoomsScreenState extends State<MyRoomsScreen> {
                         ],
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         itemCount: _rooms.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 14),
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final room = _rooms[index];
                           return GestureDetector(
@@ -101,15 +101,15 @@ class _MyRoomsScreenState extends State<MyRoomsScreen> {
                               '/faculty/rooms/details?id=${room.id}',
                             ),
                             child: Container(
-                              padding: const EdgeInsets.all(18),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                               decoration: BoxDecoration(
                                 color: AppColors.card,
-                                borderRadius: BorderRadius.circular(18),
+                                borderRadius: BorderRadius.circular(14),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withAlpha(10),
-                                    blurRadius: 14,
-                                    offset: const Offset(0, 6),
+                                    color: Colors.black.withAlpha(8),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
                                   ),
                                 ],
                               ),
@@ -119,17 +119,17 @@ class _MyRoomsScreenState extends State<MyRoomsScreen> {
                                   Text(
                                     room.name,
                                     style: AppTextStyles.headingMedium
-                                        .copyWith(fontSize: 16),
+                                        .copyWith(fontSize: 14),
                                   ),
                                   if (room.subject != null) ...[
-                                    const SizedBox(height: 8),
-                                    Text(room.subject!, style: AppTextStyles.bodySmall),
+                                    const SizedBox(height: 4),
+                                    Text(room.subject!, style: AppTextStyles.bodySmall.copyWith(fontSize: 12)),
                                   ],
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 8),
                                   Text(
                                     '${room.memberCount} students'
                                     '${room.pendingCount > 0 ? ' · ${room.pendingCount} pending' : ''}',
-                                    style: AppTextStyles.bodySmall,
+                                    style: AppTextStyles.bodySmall.copyWith(fontSize: 12),
                                   ),
                                 ],
                               ),
