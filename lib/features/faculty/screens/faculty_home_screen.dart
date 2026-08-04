@@ -199,22 +199,27 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   }
 
   Widget _buildStatsSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 4,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 1,
-        children: [
-          _SummaryCard(label: 'My Subjects', value: _isStatsLoading ? '—' : '$_subjectsCount', icon: Icons.book_rounded),
-          _SummaryCard(label: 'My Folders', value: _isStatsLoading ? '—' : '$_foldersCount', icon: Icons.folder_rounded),
-          _SummaryCard(label: 'Active Rooms', value: _isStatsLoading ? '—' : '$_roomsCount', icon: Icons.groups_rounded),
-          _SummaryCard(label: 'Shared Books', value: _isStatsLoading ? '—' : '$_sharedBooksCount', icon: Icons.menu_book_rounded),
-        ],
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 360;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: isCompact ? 2 : 4,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: isCompact ? 0.95 : 1.0,
+            children: [
+              _SummaryCard(label: 'My Subjects', value: _isStatsLoading ? '—' : '$_subjectsCount', icon: Icons.book_rounded),
+              _SummaryCard(label: 'My Folders', value: _isStatsLoading ? '—' : '$_foldersCount', icon: Icons.folder_rounded),
+              _SummaryCard(label: 'Active Rooms', value: _isStatsLoading ? '—' : '$_roomsCount', icon: Icons.groups_rounded),
+              _SummaryCard(label: 'Shared Books', value: _isStatsLoading ? '—' : '$_sharedBooksCount', icon: Icons.menu_book_rounded),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -350,7 +355,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14),
@@ -364,26 +369,31 @@ class _SummaryCard extends StatelessWidget {
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: AppColors.primary, size: 22),
-          const SizedBox(height: 8),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              maxLines: 1,
-              style: AppTextStyles.headingMedium.copyWith(fontSize: 18),
+          Icon(icon, color: AppColors.primary, size: 20),
+          const SizedBox(height: 6),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: AppTextStyles.headingMedium.copyWith(fontSize: 16),
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall.copyWith(
-              fontSize: 10,
-              color: AppColors.textMuted,
+          const SizedBox(height: 2),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodySmall.copyWith(
+                fontSize: 10,
+                color: AppColors.textMuted,
+              ),
             ),
           ),
         ],
