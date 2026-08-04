@@ -3,6 +3,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/classroom.dart';
 import '../../../services/faculty_classroom_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 /// Share an existing folder into a classroom (recommended books for students).
 class AddBooksToRoomScreen extends StatefulWidget {
@@ -45,15 +46,11 @@ class _AddBooksToRoomScreenState extends State<AddBooksToRoomScreen> {
     try {
       await _service.shareFolder(widget.classroomId, folder.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Shared "${folder.name}" to this room.')),
-      );
+      AppNotify.success(context, 'Shared "${folder.name}" to this room.');
       Navigator.of(context).pop();
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.validationSummary)),
-      );
+      AppNotify.error(context, e.validationSummary);
     } finally {
       if (mounted) setState(() => _sharingId = null);
     }

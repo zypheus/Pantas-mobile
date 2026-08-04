@@ -6,6 +6,7 @@ import '../../../models/user.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/user_service.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 /// Faculty-only profile — no student borrow/attendance/classroom tiles.
 class FacultyProfileScreen extends StatefulWidget {
@@ -62,15 +63,11 @@ class _FacultyProfileScreenState extends State<FacultyProfileScreen> {
         context.go('/login');
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(exception.message)),
-      );
+      AppNotify.error(context, exception.message);
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to load profile.')),
-      );
+      AppNotify.error(context, 'Unable to load profile.');
     }
   }
 
@@ -81,9 +78,7 @@ class _FacultyProfileScreenState extends State<FacultyProfileScreen> {
       context.go('/login');
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to logout')),
-      );
+      AppNotify.error(context, 'Failed to logout');
     }
   }
 

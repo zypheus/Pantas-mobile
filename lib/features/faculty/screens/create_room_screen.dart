@@ -4,6 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../services/faculty_classroom_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 enum CreateMode { room, folder }
 
@@ -43,8 +44,9 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_isCreatingRoom ? 'Room name is required.' : 'Folder name is required.')),
+      AppNotify.info(
+        context,
+        _isCreatingRoom ? 'Room name is required.' : 'Folder name is required.',
       );
       return;
     }
@@ -60,17 +62,17 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
               : _descriptionController.text.trim(),
         );
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Folder created.')));
+        AppNotify.success(context, 'Folder created.');
         // Navigate to the new folder details using its id.
         context.go('/faculty/folders/details?id=${Uri.encodeComponent(folder.id)}');
         return;
       } on ApiException catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.validationSummary)));
+        AppNotify.error(context, e.validationSummary);
         return;
       } catch (_) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to create folder.')));
+        AppNotify.error(context, 'Unable to create folder.');
         return;
       } finally {
         if (mounted) setState(() => _saving = false);
@@ -94,14 +96,10 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
       context.go('/faculty/rooms/details?id=${room.id}');
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.validationSummary)),
-      );
+      AppNotify.error(context, e.validationSummary);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to create room.')),
-      );
+      AppNotify.error(context, 'Unable to create room.');
     } finally {
       if (mounted) setState(() => _saving = false);
     }

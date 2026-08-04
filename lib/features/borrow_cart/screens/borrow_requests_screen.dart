@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/borrow_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 import '../../../shared/widgets/primary_button.dart';
 
 class BorrowRequestsScreen extends StatefulWidget {
@@ -60,15 +61,11 @@ class _BorrowRequestsScreenState extends State<BorrowRequestsScreen> {
     try {
       await _borrowService.cancelBorrowRequest(request.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Borrow request cancelled.')),
-      );
+      AppNotify.success(context, 'Borrow request cancelled.');
       await _loadRequests(refresh: true);
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      AppNotify.error(context, error.message);
     } finally {
       if (mounted) setState(() => _cancellingId = null);
     }

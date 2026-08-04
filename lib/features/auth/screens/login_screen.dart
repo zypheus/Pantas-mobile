@@ -4,6 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 import '../../../shared/widgets/pantas_loader.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -31,16 +32,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = passwordController.text;
 
     if (loginId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your ID Number.')),
-      );
+      AppNotify.info(context, 'Please enter your ID Number.');
       return;
     }
 
     if (password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your password.')),
-      );
+      AppNotify.info(context, 'Please enter your password.');
       return;
     }
 
@@ -58,14 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on ApiException catch (exception) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(exception.validationSummary)));
+      AppNotify.error(context, exception.validationSummary);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to sign in. Please try again.')),
-      );
+      AppNotify.error(context, 'Unable to sign in. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

@@ -4,6 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/room_reservation.dart';
 import '../../../services/room_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 
@@ -89,23 +90,16 @@ class _RoomReservationDetailsScreenState
       setState(() {
         _reservation = updated;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _roomService.lastMessage ?? 'Room reservation cancelled.',
-          ),
-        ),
+      AppNotify.success(
+        context,
+        _roomService.lastMessage ?? 'Room reservation cancelled.',
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.validationSummary)));
+      AppNotify.error(context, error.validationSummary);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to cancel reservation.')),
-      );
+      AppNotify.error(context, 'Unable to cancel reservation.');
     } finally {
       if (mounted) {
         setState(() {

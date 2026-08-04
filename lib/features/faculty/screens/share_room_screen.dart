@@ -4,6 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/classroom.dart';
 import '../../../services/faculty_classroom_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 class ShareRoomScreen extends StatefulWidget {
   final String classroomId;
@@ -43,14 +44,10 @@ class _ShareRoomScreenState extends State<ShareRoomScreen> {
       final room = await _service.regenerateCode(widget.classroomId);
       if (!mounted) return;
       setState(() => _room = room);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Join code regenerated.')),
-      );
+      AppNotify.success(context, 'Join code regenerated.');
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.validationSummary)),
-      );
+      AppNotify.error(context, e.validationSummary);
     }
   }
 
@@ -105,9 +102,7 @@ class _ShareRoomScreenState extends State<ShareRoomScreen> {
                     onPressed: () async {
                       await Clipboard.setData(ClipboardData(text: code));
                       if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Join code copied.')),
-                      );
+                      AppNotify.success(context, 'Join code copied.');
                     },
                     icon: const Icon(Icons.copy_rounded),
                     label: const Text('Copy code'),

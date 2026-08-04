@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
+import '../shared/widgets/app_notify.dart';
 import '../shared/widgets/skeleton_loading.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -35,9 +36,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load notifications')),
-        );
+        AppNotify.error(context, 'Failed to load notifications');
       }
     }
   }
@@ -48,9 +47,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       _loadNotifications();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to mark as read')),
-        );
+        AppNotify.error(context, 'Failed to mark as read');
       }
     }
   }

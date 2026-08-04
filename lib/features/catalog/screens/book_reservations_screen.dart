@@ -6,6 +6,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/book_reservation.dart';
 import '../../../services/reservation_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 
 /// Screen that lists the current student's book reservations.
@@ -71,24 +72,17 @@ class _BookReservationsScreenState extends State<BookReservationsScreen> {
       await _reservationService.cancelReservation(reservation.id);
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _reservationService.lastMessage ?? 'Reservation cancelled.',
-          ),
-        ),
+      AppNotify.success(
+        context,
+        _reservationService.lastMessage ?? 'Reservation cancelled.',
       );
       await _loadReservations(refresh: true);
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.validationSummary)),
-      );
+      AppNotify.error(context, error.validationSummary);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to cancel reservation.')),
-      );
+      AppNotify.error(context, 'Unable to cancel reservation.');
     } finally {
       if (mounted) setState(() => _cancellingId = null);
     }

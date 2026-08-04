@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../models/room.dart';
 import '../../../models/room_reservation.dart';
 import '../../../services/room_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 import '../../rooms/widgets/time_slot_chip.dart';
@@ -121,9 +122,7 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
     final room = selectedRoom;
     final slot = selectedSlot;
     if (room == null || slot == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Choose a room and available time slot.')),
-      );
+      AppNotify.info(context, 'Choose a room and available time slot.');
       return;
     }
 
@@ -132,12 +131,9 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
     }
 
     if (_studentCount > room.capacity) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'This room only allows up to ${room.capacity} students.',
-          ),
-        ),
+      AppNotify.info(
+        context,
+        'This room only allows up to ${room.capacity} students.',
       );
       return;
     }
@@ -165,25 +161,18 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _roomService.lastMessage ?? 'Room reservation submitted.',
-          ),
-        ),
+      AppNotify.success(
+        context,
+        _roomService.lastMessage ?? 'Room reservation submitted.',
       );
       await context.push('/room_reservation_details?id=${reservation.id}');
       await _loadInitialData(refresh: true);
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.validationSummary)));
+      AppNotify.error(context, error.validationSummary);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to submit reservation.')),
-      );
+      AppNotify.error(context, 'Unable to submit reservation.');
     } finally {
       if (mounted) {
         setState(() {

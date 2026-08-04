@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/borrow_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 import '../../../shared/widgets/primary_button.dart';
 
 class BorrowCartScreen extends StatefulWidget {
@@ -58,21 +59,15 @@ class _BorrowCartScreenState extends State<BorrowCartScreen> {
         if (rejected.isNotEmpty) rejected.join('\n'),
       ].join('\n');
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      AppNotify.success(context, message);
       setState(() {});
       await _loadBorrowLimits(refresh: true);
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.validationSummary)));
+      AppNotify.error(context, error.validationSummary);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to submit borrow request.')),
-      );
+      AppNotify.error(context, 'Unable to submit borrow request.');
     } finally {
       if (mounted) {
         setState(() {

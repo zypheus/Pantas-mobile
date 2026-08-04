@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/book.dart';
 import '../services/borrow_service.dart';
 import '../services/catalog_service.dart';
+import '../shared/widgets/app_notify.dart';
 import '../shared/widgets/skeleton_loading.dart';
 
 class BookDetailsScreen extends StatefulWidget {
@@ -39,25 +40,19 @@ class _BookDetailsScreenState extends State<BookDetailsScreen> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load book details.')),
-        );
+        AppNotify.error(context, 'Failed to load book details.');
       }
     }
   }
 
   void _addToBorrowCart() {
     _borrowService.addToBorrowCart(_book!.id);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Added to borrow cart')),
-    );
+    AppNotify.success(context, 'Added to borrow cart');
   }
 
   void _saveToFavorites() {
     // TODO: Implement save to favorites
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Saved to favorites')),
-    );
+    AppNotify.success(context, 'Saved to favorites');
   }
 
   @override

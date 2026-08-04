@@ -4,6 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -52,23 +53,26 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     // Client-side validation
     if (current.isEmpty) {
-      _showError('Please enter your current password.');
+      AppNotify.info(context, 'Please enter your current password.');
       return;
     }
 
     final validationError = _validatePassword(newPassword);
     if (validationError != null) {
-      _showError(validationError);
+      AppNotify.info(context, validationError);
       return;
     }
 
     if (newPassword != confirm) {
-      _showError('New password and confirmation do not match.');
+      AppNotify.info(context, 'New password and confirmation do not match.');
       return;
     }
 
     if (newPassword == current) {
-      _showError('New password must be different from your current password.');
+      AppNotify.info(
+        context,
+        'New password must be different from your current password.',
+      );
       return;
     }
 
@@ -83,31 +87,20 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password changed successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      AppNotify.success(context, 'Password changed successfully!');
 
       context.go(homeRouteForCurrentUser());
     } on ApiException catch (exception) {
       if (!mounted) return;
-      _showError(exception.validationSummary);
+      AppNotify.error(context, exception.validationSummary);
     } catch (_) {
       if (!mounted) return;
-      _showError('Unable to change password. Please try again.');
+      AppNotify.error(context, 'Unable to change password. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red.shade700),
-    );
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/room_service.dart';
+import '../shared/widgets/app_notify.dart';
 import '../shared/widgets/skeleton_loading.dart';
 
 class RoomReservationScreen extends StatefulWidget {
@@ -48,9 +49,7 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load rooms')),
-        );
+        AppNotify.error(context, 'Failed to load rooms');
       }
     }
   }
@@ -76,18 +75,14 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load time slots')),
-        );
+        AppNotify.error(context, 'Failed to load time slots');
       }
     }
   }
 
   Future<void> _submitReservation() async {
     if (_selectedRoom == null || _selectedStartTime == null || _selectedEndTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
-      );
+      AppNotify.info(context, 'Please fill in all fields');
       return;
     }
 
@@ -106,20 +101,14 @@ class _RoomReservationScreenState extends State<RoomReservationScreen> {
       if (!mounted) return;
 
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reservation submitted successfully')),
-        );
+        AppNotify.success(context, 'Reservation submitted successfully');
         Navigator.of(context).pop();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to submit reservation')),
-        );
+        AppNotify.error(context, 'Failed to submit reservation');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('An error occurred')),
-        );
+        AppNotify.error(context, 'An error occurred');
       }
     } finally {
       if (mounted) {

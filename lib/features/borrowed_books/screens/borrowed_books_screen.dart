@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../shared/widgets/app_notify.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/room.dart';
@@ -101,9 +102,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
         _selectedDate == null ||
         _startTime == null ||
         _endTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all required fields.')),
-      );
+      AppNotify.info(context, 'Please fill in all required fields.');
       return;
     }
 
@@ -121,22 +120,17 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_roomService.lastMessage ?? 'Reservation submitted!'),
-        ),
+      AppNotify.success(
+        context,
+        _roomService.lastMessage ?? 'Reservation submitted!',
       );
       context.go('/room_reservation_details?id=${reservation.id}');
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.validationSummary)));
+      AppNotify.error(context, error.validationSummary);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to submit reservation.')),
-      );
+      AppNotify.error(context, 'Unable to submit reservation.');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

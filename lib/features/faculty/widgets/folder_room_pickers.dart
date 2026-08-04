@@ -3,6 +3,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/classroom.dart';
 import '../../../services/faculty_classroom_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 /// Picks a folder (or creates one), then adds [bookId] to it.
 Future<bool> addBookToFolderFlow(
@@ -17,9 +18,7 @@ Future<bool> addBookToFolderFlow(
     if (preselectedFolderId != null && preselectedFolderId.isNotEmpty) {
       await svc.addBooksToFolder(preselectedFolderId, [bookId]);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Book added to folder.')),
-        );
+        AppNotify.success(context, 'Book added to folder.');
       }
       return true;
     }
@@ -29,23 +28,17 @@ Future<bool> addBookToFolderFlow(
 
     await svc.addBooksToFolder(folder.id, [bookId]);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Added to "${folder.name}".')),
-      );
+      AppNotify.success(context, 'Added to "${folder.name}".');
     }
     return true;
   } on ApiException catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      AppNotify.error(context, e.message);
     }
     return false;
   } catch (_) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to add book to folder.')),
-      );
+      AppNotify.error(context, 'Unable to add book to folder.');
     }
     return false;
   }
@@ -74,27 +67,20 @@ Future<bool> addBookToRoomFlow(
     await svc.shareFolder(classroom.id, folder.id);
 
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Added to "${folder.name}" and shared with "${classroom.name}".',
-          ),
-        ),
+      AppNotify.success(
+        context,
+        'Added to "${folder.name}" and shared with "${classroom.name}".',
       );
     }
     return true;
   } on ApiException catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      AppNotify.error(context, e.message);
     }
     return false;
   } catch (_) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to add book to room.')),
-      );
+      AppNotify.error(context, 'Unable to add book to room.');
     }
     return false;
   }
@@ -190,7 +176,6 @@ class _FolderPickerSheetState extends State<_FolderPickerSheet> {
   }
 
   Future<void> _createFolder() async {
-    final messenger = ScaffoldMessenger.of(context);
     final nameController = TextEditingController();
     final name = await showDialog<String>(
       context: context,
@@ -231,13 +216,11 @@ class _FolderPickerSheetState extends State<_FolderPickerSheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _creating = false);
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+      AppNotify.error(context, e.message);
     } catch (_) {
       if (!mounted) return;
       setState(() => _creating = false);
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Unable to create folder.')),
-      );
+      AppNotify.error(context, 'Unable to create folder.');
     }
   }
 
