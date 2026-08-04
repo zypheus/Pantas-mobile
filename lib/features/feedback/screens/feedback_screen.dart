@@ -88,7 +88,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Feedback & Support'),
+        title: const Text(
+          'Feedback & Support',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
