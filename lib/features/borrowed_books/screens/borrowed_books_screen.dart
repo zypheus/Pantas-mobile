@@ -210,7 +210,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
                       'Book a study room',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 13,
+                        fontSize: 20,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
