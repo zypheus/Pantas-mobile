@@ -101,12 +101,31 @@ class _MyClassroomsScreenState extends State<MyClassroomsScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            title: Text(room.name),
+                            leading: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.school_rounded,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            title: Text(
+                              room.name,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
                             subtitle: Text(
                               [
                                 room.facultyName,
                                 room.subject,
                               ].whereType<String>().join(' · '),
+                            ),
+                            trailing: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textMuted,
                             ),
                             onTap: () => context.push('/classrooms/${room.id}'),
                           );

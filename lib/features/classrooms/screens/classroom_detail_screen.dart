@@ -74,18 +74,51 @@ class _ClassroomDetailScreenState extends State<ClassroomDetailScreen> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       if (classroom.facultyName != null)
-                        Text(
-                          'Faculty: ${classroom.facultyName}',
-                          style: const TextStyle(color: AppColors.textMuted),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.person_pin_circle_rounded,
+                              size: 20,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Faculty: ${classroom.facultyName}',
+                                style: const TextStyle(color: AppColors.textMuted),
+                              ),
+                            ),
+                          ],
                         ),
                       if (classroom.description != null) ...[
                         const SizedBox(height: 8),
-                        Text(classroom.description!),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.notes_rounded,
+                              size: 20,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(classroom.description!)),
+                          ],
+                        ),
                       ],
                       const SizedBox(height: 16),
-                      const Text(
-                        'Assignments',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.assignment_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Assignments',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       if (_assignments.isEmpty)
@@ -97,8 +130,23 @@ class _ClassroomDetailScreenState extends State<ClassroomDetailScreen> {
                         ..._assignments.map(
                           (a) => ListTile(
                             contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.assignment_outlined),
-                            title: Text(a.title),
+                            leading: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.assignment_rounded,
+                                color: AppColors.primary,
+                                size: 22,
+                              ),
+                            ),
+                            title: Text(
+                              a.title,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
                             subtitle: Text(
                               [
                                 if (a.dueAt != null)
@@ -106,16 +154,29 @@ class _ClassroomDetailScreenState extends State<ClassroomDetailScreen> {
                                 a.mySubmission?.status ?? 'assigned',
                               ].join(' · '),
                             ),
-                            trailing: const Icon(Icons.chevron_right),
+                            trailing: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textMuted,
+                            ),
                             onTap: () => context.push(
                               '/assignments/details?id=${Uri.encodeComponent(a.id)}',
                             ),
                           ),
                         ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Recommended books',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.menu_book_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Recommended books',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       if (classroom.books.isEmpty)
@@ -126,8 +187,28 @@ class _ClassroomDetailScreenState extends State<ClassroomDetailScreen> {
                       else
                         ...classroom.books.map(
                           (book) => ListTile(
-                            title: Text(book.title),
+                            leading: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.menu_book_rounded,
+                                color: AppColors.primary,
+                                size: 22,
+                              ),
+                            ),
+                            title: Text(
+                              book.title,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
                             subtitle: Text(book.author),
+                            trailing: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textMuted,
+                            ),
                             onTap: () => context.push(
                               '/book_details?id=${book.id}',
                             ),
