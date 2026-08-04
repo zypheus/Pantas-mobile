@@ -5,9 +5,9 @@ import '../../core/theme/app_colors.dart';
 class FacultyFloatingNavBar extends StatelessWidget {
   const FacultyFloatingNavBar({super.key});
 
-  static const double _barHeight = 76;
-  static const double _fabSize = 56;
-  static const double _iconSize = 24;
+  static const double _barHeight = 60;
+  static const double _fabSize = 44;
+  static const double _iconSize = 18;
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +17,9 @@ class FacultyFloatingNavBar extends StatelessWidget {
 
     return Container(
       color: Colors.transparent,
-      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPadding + 14),
+      padding: EdgeInsets.fromLTRB(12, 0, 12, bottomPadding + 10),
       child: SizedBox(
-        height: _barHeight + _fabSize / 2,
+        height: _barHeight + 12,
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.bottomCenter,
@@ -78,17 +78,17 @@ class FacultyFloatingNavBar extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: () => context.go(route),
         child: Padding(
-          padding: const EdgeInsets.only(top: 12, bottom: 10),
+          padding: const EdgeInsets.only(top: 8, bottom: 8),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: _iconSize, color: color),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 label,
                 style: TextStyle(
                   color: color,
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
@@ -103,8 +103,8 @@ class FacultyFloatingNavBar extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.go('/faculty/create-room'),
       child: Container(
-        width: _fabSize + 16,
-        height: _fabSize + 16,
+        width: _fabSize + 12,
+        height: _fabSize + 12,
         decoration: const BoxDecoration(
           color: AppColors.accent,
           shape: BoxShape.circle,
@@ -117,7 +117,7 @@ class FacultyFloatingNavBar extends StatelessWidget {
               color: AppColors.navyBrand,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.add_rounded, size: 28, color: Colors.white),
+            child: const Icon(Icons.add_rounded, size: 22, color: Colors.white),
           ),
         ),
       ),

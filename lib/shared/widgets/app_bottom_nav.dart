@@ -14,11 +14,11 @@ class FloatingNavBar extends StatelessWidget {
   const FloatingNavBar({super.key});
 
   // ───── dimensions ─────
-  static const double _barHeight = 70;
-  static const double _fabSize = 56;
-  static const double _fabRingWidth = 4;
-  static const double _fabOverlap = 16;
-  static const double _iconSize = 22;
+  static const double _barHeight = 58;
+  static const double _fabSize = 44;
+  static const double _fabRingWidth = 3;
+  static const double _fabOverlap = 10;
+  static const double _iconSize = 18;
 
   // ───── colors ─────
   static const Color _barColor = AppColors.navyBrand;
@@ -32,9 +32,9 @@ class FloatingNavBar extends StatelessWidget {
 
     return Container(
       color: Colors.transparent,
-      padding: EdgeInsets.fromLTRB(20, 0, 20, bottomPad + 14),
+      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPad + 10),
       child: SizedBox(
-        height: _barHeight + _fabOverlap + 20,
+        height: _barHeight + _fabOverlap + 12,
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.bottomCenter,
@@ -52,7 +52,7 @@ class FloatingNavBar extends StatelessWidget {
                   _buildItem(context, 0, Icons.search_rounded, '/search', currentIndex, 'Catalog'),
                   _buildItem(context, 1, Icons.library_books_rounded, '/borrowed', currentIndex, 'Room'),
                   // Center gap for the FAB
-                  const SizedBox(width: 64),
+                  const SizedBox(width: 50),
                   // Right pair
                   _buildItem(context, 3, Icons.chat_bubble_outline_rounded, '/feedback', currentIndex, 'Feedback'),
                   _buildItem(context, 4, Icons.person_rounded, '/profile', currentIndex, 'Profile'),
@@ -92,11 +92,11 @@ class FloatingNavBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: _iconSize, color: color),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                   color: color,
                 ),
@@ -131,7 +131,7 @@ class FloatingNavBar extends StatelessWidget {
                 ),
                 child: Icon(
                   Icons.home_rounded,
-                  size: 28,
+                  size: 22,
                   color: AppColors.navyBrand,
                 ),
               ),
@@ -142,7 +142,7 @@ class FloatingNavBar extends StatelessWidget {
         Text(
           'Home',
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 9,
             fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
             color: isActive ? AppColors.accent : _inactiveIcon,
           ),
