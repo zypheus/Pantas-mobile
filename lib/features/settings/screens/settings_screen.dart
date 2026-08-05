@@ -8,12 +8,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _pushNotifications = true;
-  bool _dueDateReminders = true;
-  bool _overdueAlerts = true;
-  bool _reservationUpdates = true;
-  bool _announcements = true;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,66 +19,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Notification Preferences',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            _buildNotificationSwitch(
-              title: 'Push Notifications',
-              subtitle: 'Receive push notifications from the library',
-              value: _pushNotifications,
-              onChanged: (value) {
-                setState(() {
-                  _pushNotifications = value;
-                });
-              },
-            ),
-            const Divider(),
-            _buildNotificationSwitch(
-              title: 'Due Date Reminders',
-              subtitle: 'Get notified when books are due soon',
-              value: _dueDateReminders,
-              onChanged: (value) {
-                setState(() {
-                  _dueDateReminders = value;
-                });
-              },
-            ),
-            const Divider(),
-            _buildNotificationSwitch(
-              title: 'Overdue Alerts',
-              subtitle: 'Get alerted about overdue items',
-              value: _overdueAlerts,
-              onChanged: (value) {
-                setState(() {
-                  _overdueAlerts = value;
-                });
-              },
-            ),
-            const Divider(),
-            _buildNotificationSwitch(
-              title: 'Reservation Updates',
-              subtitle: 'Get updates about your room reservations',
-              value: _reservationUpdates,
-              onChanged: (value) {
-                setState(() {
-                  _reservationUpdates = value;
-                });
-              },
-            ),
-            const Divider(),
-            _buildNotificationSwitch(
-              title: 'Announcements',
-              subtitle: 'Receive library announcements and news',
-              value: _announcements,
-              onChanged: (value) {
-                setState(() {
-                  _announcements = value;
-                });
-              },
-            ),
-            const SizedBox(height: 24),
             Text(
               'App Information',
               style: Theme.of(context).textTheme.titleLarge,
@@ -125,22 +59,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildNotificationSwitch({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return ListTile(
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
       ),
     );
   }

@@ -322,16 +322,6 @@ class _RoomCard extends StatelessWidget {
                   bottom: 0,
                   child: Container(width: 5, color: theme.accent),
                 ),
-                Positioned(
-                  right: -8,
-                  top: 8,
-                  bottom: 8,
-                  child: Icon(
-                    theme.decoIcon,
-                    size: 92,
-                    color: theme.accent.withValues(alpha: 0.08),
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
                   child: Row(
