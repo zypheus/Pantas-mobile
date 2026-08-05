@@ -101,7 +101,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
-                ],
+                ],  
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,

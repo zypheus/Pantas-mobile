@@ -335,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: [
         SizedBox(
-          height: 120,
+          height: 230,
           child: ListView.separated(
             controller: _newArrivalsScrollController,
             scrollDirection: Axis.horizontal,
@@ -384,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: [
         SizedBox(
-          height: 120,
+          height: 230,
           child: ListView.separated(
             controller: _recommendationScrollController,
             scrollDirection: Axis.horizontal,
@@ -470,7 +470,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         const SizedBox(height: 10),
         SizedBox(
-          height: 120,
+          height: 230,
           child: ListView.separated(
             controller: _facultyScrollController,
             scrollDirection: Axis.horizontal,
@@ -542,7 +542,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildRecommendationsSkeleton() {
     return SizedBox(
-      height: 120,
+      height: 230,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: 3,
@@ -624,7 +624,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNewArrivalsSkeleton() {
     return SizedBox(
-      height: 120,
+      height: 230,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: 3,

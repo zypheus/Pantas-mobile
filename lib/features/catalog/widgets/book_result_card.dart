@@ -14,8 +14,8 @@ class BookResultCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 120,
-        padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+        width: 160,
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(20),
@@ -34,17 +34,17 @@ class BookResultCard extends StatelessWidget {
             // Cover image
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: _BookCover(coverUrl: book.coverImage, height: 48),
+              child: _BookCover(coverUrl: book.coverImage, height: 100),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               book.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
-                fontSize: 11,
-                height: 1.1,
+                fontSize: 13,
+                height: 1.25,
               ),
             ),
             const SizedBox(height: 2),
@@ -54,11 +54,11 @@ class BookResultCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: AppColors.textMuted,
-                fontSize: 9,
-                height: 1.0,
+                fontSize: 11,
+                height: 1.2,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
