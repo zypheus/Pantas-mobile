@@ -56,6 +56,27 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  Future<void> _markAsRead(NotificationModel note) async {
+    if (note.isRead) return;
+    await _notificationService.markAsRead(note.id);
+    if (!mounted) return;
+    setState(() {
+      _notifications = _notifications
+          .map((n) => n.id == note.id ? n.copyWith(isRead: true) : n)
+          .toList(growable: false);
+    });
+  }
+
+  Future<void> _markAllAsRead() async {
+    await _notificationService.markAllAsRead();
+    if (!mounted) return;
+    setState(() {
+      _notifications = _notifications
+          .map((n) => n.copyWith(isRead: true))
+          .toList(growable: false);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final unread = _notifications.where((note) => !note.isRead).length;
@@ -89,6 +110,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           type: note.type,
                           isRead: note.isRead,
                           time: _relativeTime(note.createdAt),
+                          onMarkAsRead: note.isRead
+                              ? null
+                              : () => _markAsRead(note),
                         );
                       },
                     ),
@@ -123,7 +147,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ],
                 ),
               ),
-              if (unreadCount > 0)
+              if (unreadCount > 0) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -142,6 +166,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _markAllAsRead,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.done_all_rounded,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Mark all read',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

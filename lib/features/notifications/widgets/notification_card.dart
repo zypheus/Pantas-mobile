@@ -7,6 +7,7 @@ class NotificationCard extends StatelessWidget {
   final String type;
   final bool isRead;
   final String? time;
+  final VoidCallback? onMarkAsRead;
 
   const NotificationCard({
     super.key,
@@ -15,6 +16,7 @@ class NotificationCard extends StatelessWidget {
     required this.type,
     required this.isRead,
     this.time,
+    this.onMarkAsRead,
   });
 
   _NotificationStyle get _style {
@@ -182,6 +184,44 @@ class NotificationCard extends StatelessWidget {
                       fontSize: 11,
                       color: AppColors.textMuted.withValues(alpha: 0.7),
                       fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+                if (!isRead && onMarkAsRead != null) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: GestureDetector(
+                      onTap: onMarkAsRead,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: s.bgColor,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.done_rounded,
+                              size: 14,
+                              color: s.color,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Mark as read',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: s.color,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],

@@ -17,6 +17,18 @@ class NotificationModel {
     this.relatedId,
   });
 
+  NotificationModel copyWith({bool? isRead}) {
+    return NotificationModel(
+      id: id,
+      title: title,
+      message: message,
+      type: type,
+      createdAt: createdAt,
+      isRead: isRead ?? this.isRead,
+      relatedId: relatedId,
+    );
+  }
+
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     final source = _asMap(json['source']);
 

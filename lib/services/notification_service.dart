@@ -11,13 +11,14 @@ class NotificationService {
 
   final ApiClient _apiClient = ApiClient();
   final MemoryCacheStore _cache = MemoryCacheStore.instance;
+  final Set<String> _locallyReadIds = {};
 
   static const _notificationsTtl = Duration(minutes: 1);
 
   Future<List<NotificationModel>> getNotifications({
     bool refresh = false,
   }) async {
-    return _cache.getOrFetch<List<NotificationModel>>(
+    final notifications = await _cache.getOrFetch<List<NotificationModel>>(
       'notifications:list',
       ttl: _notificationsTtl,
       refresh: refresh,
@@ -31,11 +32,27 @@ class NotificationService {
             .toList(growable: false);
       },
     );
+
+    // Apply locally-marked-as-read state on top of server state.
+    if (_locallyReadIds.isEmpty) return notifications;
+    return notifications
+        .map((n) => _locallyReadIds.contains(n.id)
+            ? n.copyWith(isRead: true)
+            : n)
+        .toList(growable: false);
   }
 
   Future<bool> markAsRead(String notificationId) async {
-    // The mobile API intentionally has no persistent read/unread endpoint yet.
-    return false;
+    _locallyReadIds.add(notificationId);
+    return true;
+  }
+
+  Future<bool> markAllAsRead() async {
+    final notifications = await getNotifications();
+    for (final n in notifications) {
+      _locallyReadIds.add(n.id);
+    }
+    return true;
   }
 
   Future<int> getUnreadCount({bool refresh = false}) async {
