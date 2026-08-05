@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/borrow_service.dart';
+import '../shared/widgets/app_notify.dart';
 
 class BorrowCartScreen extends StatefulWidget {
   const BorrowCartScreen({super.key});
@@ -21,9 +22,7 @@ class _BorrowCartScreenState extends State<BorrowCartScreen> {
   Future<void> _submitCheckout() async {
     final cartItems = _borrowService.getBorrowCart();
     if (cartItems.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Cart is empty')));
+      AppNotify.info(context, 'Cart is empty');
       return;
     }
 
@@ -36,22 +35,14 @@ class _BorrowCartScreenState extends State<BorrowCartScreen> {
       if (!mounted) return;
 
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Checkout request submitted successfully'),
-          ),
-        );
+        AppNotify.success(context, 'Checkout request submitted successfully');
         Navigator.of(context).pop();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to submit checkout request')),
-        );
+        AppNotify.error(context, 'Failed to submit checkout request');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('An error occurred')));
+        AppNotify.error(context, 'An error occurred');
       }
     } finally {
       if (mounted) {

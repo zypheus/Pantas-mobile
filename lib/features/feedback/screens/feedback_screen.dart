@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../services/user_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
@@ -54,27 +55,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       });
       _messageController.clear();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.check_circle_outline, color: Colors.white),
-              SizedBox(width: 12),
-              Expanded(child: Text('Feedback submitted successfully')),
-            ],
-          ),
-        ),
-      );
+      AppNotify.success(context, 'Feedback submitted successfully');
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.validationSummary)),
-      );
+      AppNotify.error(context, e.validationSummary);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to submit feedback. Please try again.')),
-      );
+      AppNotify.error(context, 'Unable to submit feedback. Please try again.');
     } finally {
       if (mounted) {
         setState(() {

@@ -6,6 +6,7 @@ import '../../../models/book.dart';
 import '../../../services/assignment_service.dart';
 import '../../../services/catalog_service.dart';
 import '../../../services/faculty_classroom_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 class CreateAssignmentScreen extends StatefulWidget {
   final String classroomId;
@@ -96,9 +97,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   Future<void> _save() async {
     final title = _titleCtrl.text.trim();
     if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Title is required.')),
-      );
+      AppNotify.info(context, 'Title is required.');
       return;
     }
 
@@ -119,12 +118,10 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      AppNotify.error(context, e.message);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to create assignment.')),
-      );
+      AppNotify.error(context, 'Unable to create assignment.');
     } finally {
       if (mounted) setState(() => _saving = false);
     }

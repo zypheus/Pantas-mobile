@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../shared/widgets/app_notify.dart';
 import '../shared/widgets/skeleton_loading.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -49,9 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       Navigator.of(context).pushReplacementNamed('/login');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to logout')),
-        );
+        AppNotify.error(context, 'Failed to logout');
       }
     }
   }

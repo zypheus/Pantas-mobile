@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../services/student_classroom_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 class JoinClassroomScreen extends StatefulWidget {
   const JoinClassroomScreen({super.key});
@@ -24,24 +25,21 @@ class _JoinClassroomScreenState extends State<JoinClassroomScreen> {
   Future<void> _join() async {
     final code = _codeController.text.trim();
     if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a join code.')),
-      );
+      AppNotify.info(context, 'Enter a join code.');
       return;
     }
     setState(() => _loading = true);
     try {
       final result = await _service.joinClassroom(code);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message']?.toString() ?? 'Joined.')),
+      AppNotify.success(
+        context,
+        result['message']?.toString() ?? 'Joined.',
       );
       context.pop();
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.validationSummary)),
-      );
+      AppNotify.error(context, e.validationSummary);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

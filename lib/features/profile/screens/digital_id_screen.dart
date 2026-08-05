@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/id_card_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 class DigitalIdScreen extends StatefulWidget {
   const DigitalIdScreen({super.key});
@@ -90,10 +91,9 @@ class _DigitalIdScreenState extends State<DigitalIdScreen> {
         final granted = await Gal.requestAccess(toAlbum: true);
         if (!granted) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Photo library permission is required to save.'),
-            ),
+          AppNotify.info(
+            context,
+            'Photo library permission is required to save.',
           );
           return;
         }
@@ -107,19 +107,13 @@ class _DigitalIdScreenState extends State<DigitalIdScreen> {
       await Gal.putImageBytes(bytes, name: name);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Saved ID $side to gallery.')),
-      );
+      AppNotify.success(context, 'Saved ID $side to gallery.');
     } on GalException catch (exception) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(exception.type.message)),
-      );
+      AppNotify.error(context, exception.type.message);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save ID to gallery.')),
-      );
+      AppNotify.error(context, 'Failed to save ID to gallery.');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

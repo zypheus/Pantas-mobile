@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/faculty_classroom_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 class CreateFolderScreen extends StatefulWidget {
   const CreateFolderScreen({super.key});
@@ -27,9 +28,7 @@ class _CreateFolderScreenState extends State<CreateFolderScreen> {
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Folder name is required.')),
-      );
+      AppNotify.info(context, 'Folder name is required.');
       return;
     }
     setState(() => _saving = true);
@@ -44,9 +43,7 @@ class _CreateFolderScreenState extends State<CreateFolderScreen> {
       context.go('/faculty/folders/details?id=${folder.id}');
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.validationSummary)),
-      );
+      AppNotify.error(context, e.validationSummary);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

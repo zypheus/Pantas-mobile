@@ -4,6 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/book.dart';
 import '../../../models/book_reservation.dart';
+import '../../../shared/widgets/app_notify.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../services/borrow_service.dart';
 import '../../../services/catalog_service.dart';
@@ -1042,26 +1043,19 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
 
       _reservationService.refreshNotifications();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _reservationService.lastMessage ??
-                'Book reserved. You are #${reservation.queuePosition} in the queue.',
-          ),
-        ),
+      AppNotify.success(
+        context,
+        _reservationService.lastMessage ??
+            'Book reserved. You are #${reservation.queuePosition} in the queue.',
       );
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _isReserving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.validationSummary)),
-      );
+      AppNotify.error(context, error.validationSummary);
     } catch (_) {
       if (!mounted) return;
       setState(() => _isReserving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to reserve book.')),
-      );
+      AppNotify.error(context, 'Unable to reserve book.');
     }
   }
 
@@ -1081,25 +1075,18 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
         _isCancelling = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _reservationService.lastMessage ?? 'Reservation cancelled.',
-          ),
-        ),
+      AppNotify.success(
+        context,
+        _reservationService.lastMessage ?? 'Reservation cancelled.',
       );
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _isCancelling = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.validationSummary)),
-      );
+      AppNotify.error(context, error.validationSummary);
     } catch (_) {
       if (!mounted) return;
       setState(() => _isCancelling = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to cancel reservation.')),
-      );
+      AppNotify.error(context, 'Unable to cancel reservation.');
     }
   }
 
@@ -1109,13 +1096,12 @@ class _BookDetailsScreenState extends State<BookDetailsScreen>
   }
 
   void _showAddToCartMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Added to borrow cart.'),
-        action: SnackBarAction(
-          label: 'View cart',
-          onPressed: () => context.go('/borrow_cart'),
-        ),
+    AppNotify.success(
+      context,
+      'Added to borrow cart.',
+      action: SnackBarAction(
+        label: 'View cart',
+        onPressed: () => context.go('/borrow_cart'),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/book.dart';
 import '../services/catalog_service.dart';
+import '../shared/widgets/app_notify.dart';
 import '../shared/widgets/skeleton_loading.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -43,9 +44,7 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Search failed. Please try again.')),
-        );
+        AppNotify.error(context, 'Search failed. Please try again.');
       }
     } finally {
       if (mounted) {

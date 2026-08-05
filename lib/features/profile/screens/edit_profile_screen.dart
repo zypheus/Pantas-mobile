@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../models/user.dart';
 import '../../../services/user_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -96,11 +97,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         context.go('/login');
         return;
       }
-      _showSnackBar(e.message);
+      AppNotify.error(context, e.message);
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showSnackBar('Unable to load profile data.');
+      AppNotify.error(context, 'Unable to load profile data.');
     }
   }
 
@@ -135,7 +136,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     } catch (_) {
       if (mounted) {
-        _showSnackBar('Failed to pick image.');
+        AppNotify.error(context, 'Failed to pick image.');
       }
     } finally {
       if (mounted) setState(() => _isPickingImage = false);
@@ -206,27 +207,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (!mounted) return;
 
-      _showSnackBar(message);
+      AppNotify.success(context, message);
       context.pop();
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnackBar(e.message);
+      AppNotify.error(context, e.message);
     } catch (_) {
       if (!mounted) return;
-      _showSnackBar('Failed to update profile. Please try again.');
+      AppNotify.error(context, 'Failed to update profile. Please try again.');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
   }
 
   @override

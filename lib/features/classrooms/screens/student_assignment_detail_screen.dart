@@ -4,6 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/assignment.dart';
 import '../../../services/assignment_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 class StudentAssignmentDetailScreen extends StatefulWidget {
   final String assignmentId;
@@ -60,18 +61,13 @@ class _StudentAssignmentDetailScreenState
       );
       if (!mounted) return;
       setState(() => _assignment = updated);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            text.isEmpty
-                ? 'Marked as done.'
-                : 'Response submitted.',
-          ),
-        ),
+      AppNotify.success(
+        context,
+        text.isEmpty ? 'Marked as done.' : 'Response submitted.',
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      AppNotify.error(context, e.message);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -83,12 +79,10 @@ class _StudentAssignmentDetailScreenState
       final updated = await _service.completeAssignment(widget.assignmentId);
       if (!mounted) return;
       setState(() => _assignment = updated);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Assignment marked done.')),
-      );
+      AppNotify.success(context, 'Assignment marked done.');
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      AppNotify.error(context, e.message);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

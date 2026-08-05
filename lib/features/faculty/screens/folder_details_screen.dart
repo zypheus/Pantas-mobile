@@ -4,6 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/classroom.dart';
 import '../../../services/faculty_classroom_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 class FolderDetailsScreen extends StatefulWidget {
   final String folderId;
@@ -89,9 +90,7 @@ class _FolderDetailsScreenState extends State<FolderDetailsScreen> {
                                 await _load();
                               } on ApiException catch (e) {
                                 if (!context.mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(e.validationSummary)),
-                                );
+                                AppNotify.error(context, e.validationSummary);
                               }
                             },
                           ),

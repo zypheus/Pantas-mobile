@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/app_notify.dart';
 import '../../../shared/widgets/skeleton_loading.dart';
 import '../../../models/attendance_visit.dart';
 import '../../../models/borrowed_book.dart';
@@ -89,15 +90,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         context.go('/login');
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(exception.message)));
+      AppNotify.error(context, exception.message);
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Unable to load profile.')));
+      AppNotify.error(context, 'Unable to load profile.');
     }
 
     await _loadAttendance(refresh: refresh);
@@ -143,9 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context.go('/login');
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to logout')));
+        AppNotify.error(context, 'Failed to logout');
       }
     }
   }

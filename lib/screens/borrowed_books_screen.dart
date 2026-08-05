@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/borrowed_book.dart';
 import '../services/borrow_service.dart';
+import '../shared/widgets/app_notify.dart';
 import '../shared/widgets/skeleton_loading.dart';
 
 class BorrowedBooksScreen extends StatefulWidget {
@@ -35,9 +36,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load borrowed books')),
-        );
+        AppNotify.error(context, 'Failed to load borrowed books');
       }
     }
   }
@@ -46,16 +45,12 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
     try {
       final success = await _borrowService.renewBook(bookId);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Book renewed successfully')),
-        );
+        AppNotify.success(context, 'Book renewed successfully');
         _loadBorrowedBooks();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to renew book')),
-        );
+        AppNotify.error(context, 'Failed to renew book');
       }
     }
   }

@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 enum _Tab { student, faculty }
 
@@ -597,7 +598,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      AppNotify.info(context, error);
       return;
     }
 
@@ -625,18 +626,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      AppNotify.success(context, message);
       context.go('/login');
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      AppNotify.error(context, e.message);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to submit registration.')),
-      );
+      AppNotify.error(context, 'Unable to submit registration.');
     } finally {
       if (mounted) setState(() => _isSubmittingFaculty = false);
     }
@@ -663,9 +660,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to pick photo.')),
-        );
+        AppNotify.error(context, 'Failed to pick photo.');
       }
     } finally {
       if (mounted) setState(() => _isPickingPhoto = false);
@@ -696,7 +691,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      AppNotify.info(context, error);
       return;
     }
 
@@ -724,18 +719,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      AppNotify.success(context, message);
       context.go('/login');
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      AppNotify.error(context, e.message);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to submit registration.')),
-      );
+      AppNotify.error(context, 'Unable to submit registration.');
     } finally {
       if (mounted) setState(() => _isSubmittingStudent = false);
     }

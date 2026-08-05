@@ -4,6 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/assignment.dart';
 import '../../../services/assignment_service.dart';
+import '../../../shared/widgets/app_notify.dart';
 
 class FacultyAssignmentDetailScreen extends StatefulWidget {
   final String assignmentId;
@@ -53,7 +54,7 @@ class _FacultyAssignmentDetailScreenState
       await _load();
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      AppNotify.error(context, e.message);
     }
   }
 
@@ -65,7 +66,7 @@ class _FacultyAssignmentDetailScreenState
       await _load();
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      AppNotify.error(context, e.message);
     }
   }
 
