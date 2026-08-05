@@ -63,7 +63,9 @@ class _CatalogFilterSheetState extends State<CatalogFilterSheet> {
           ),
           backgroundColor: Colors.white,
           side: BorderSide(
-            color: isSelected ? AppColors.primary : AppColors.textMuted.withOpacity(0.5),
+            color: isSelected
+                ? AppColors.primary
+                : AppColors.textMuted.withValues(alpha: 0.5),
           ),
           onSelected: (_) => onSelected(option),
         );
