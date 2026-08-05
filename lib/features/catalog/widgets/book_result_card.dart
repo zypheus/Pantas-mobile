@@ -14,8 +14,8 @@ class BookResultCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 160,
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        width: 120,
+        padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(20),
@@ -34,17 +34,17 @@ class BookResultCard extends StatelessWidget {
             // Cover image
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: _BookCover(coverUrl: book.coverImage),
+              child: _BookCover(coverUrl: book.coverImage, height: 48),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               book.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
-                fontSize: 13,
-                height: 1.25,
+                fontSize: 11,
+                height: 1.1,
               ),
             ),
             const SizedBox(height: 2),
@@ -54,11 +54,11 @@ class BookResultCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: AppColors.textMuted,
-                fontSize: 11,
-                height: 1.2,
+                fontSize: 9,
+                height: 1.0,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -86,15 +86,16 @@ class BookResultCard extends StatelessWidget {
 
 class _BookCover extends StatelessWidget {
   final String? coverUrl;
+  final double height;
 
-  const _BookCover({required this.coverUrl});
+  const _BookCover({required this.coverUrl, this.height = 100});
 
   @override
   Widget build(BuildContext context) {
     if (coverUrl != null && coverUrl!.isNotEmpty) {
       return Image.network(
         coverUrl!,
-        height: 100,
+        height: height,
         width: double.infinity,
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => _fallbackCover(),
@@ -103,7 +104,7 @@ class _BookCover extends StatelessWidget {
 
     return Image.asset(
       'assets/defaultBook.png',
-      height: 100,
+      height: height,
       width: double.infinity,
       fit: BoxFit.cover,
       errorBuilder: (_, _, _) => _fallbackCover(),
@@ -112,7 +113,7 @@ class _BookCover extends StatelessWidget {
 
   Widget _fallbackCover() {
     return Container(
-      height: 100,
+      height: height,
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -120,7 +121,7 @@ class _BookCover extends StatelessWidget {
       ),
       child: const Icon(
         Icons.menu_book_rounded,
-        size: 40,
+        size: 32,
         color: AppColors.primary,
       ),
     );
