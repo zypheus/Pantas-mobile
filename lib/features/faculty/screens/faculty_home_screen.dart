@@ -20,6 +20,8 @@ class FacultyHomeScreen extends StatefulWidget {
 class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   final _catalogService = CatalogService();
   final _classroomService = FacultyClassroomService();
+  final _scrollController = ScrollController();
+  int _currentPage = 0;
   bool _isLoading = true;
   String? _errorMessage;
   List<Book> _recommendedBooks = const [];
@@ -34,8 +36,24 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _loadRecommendations();
     _loadStats();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    const itemExtent = 160 + 14; // card width + separator
+    final page = (_scrollController.offset / itemExtent).round();
+    final clamped = page.clamp(0, _recommendedBooks.length - 1);
+    if (clamped != _currentPage) {
+      setState(() => _currentPage = clamped);
+    }
   }
 
   /// Loads dynamic counts for subjects, folders, rooms and shared books.
@@ -127,12 +145,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               const SizedBox(height: 16),
               _buildQuickActions(context),
               const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: SectionTitle(
                   title: 'Recommended Books',
-                  actionLabel: 'View all',
-                  onAction: () => context.go('/faculty/catalog'),
                 ),
               ),
               const SizedBox(height: 12),
@@ -292,24 +308,55 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       );
     }
 
-    return SizedBox(
-      height: 240,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        scrollDirection: Axis.horizontal,
-        itemBuilder: (context, index) {
-          final book = _recommendedBooks[index];
-          return SizedBox(
-            width: 160,
-            child: BookResultCard(
-              book: book,
-              onTap: () => context.go('/faculty/book_details?id=${Uri.encodeComponent(book.id)}'),
+    return Column(
+      children: [
+        SizedBox(
+          height: 240,
+          child: ListView.separated(
+            controller: _scrollController,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (context, index) {
+              final book = _recommendedBooks[index];
+              return SizedBox(
+                width: 160,
+                child: BookResultCard(
+                  book: book,
+                  onTap: () => context.go('/faculty/book_details?id=${Uri.encodeComponent(book.id)}'),
+                ),
+              );
+            },
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
+            itemCount: _recommendedBooks.length,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Center(
+          child: TextButton(
+            onPressed: () => context.go('/faculty/catalog'),
+            child: const Text('View all'),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            _recommendedBooks.length,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: index == _currentPage ? 20 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: index == _currentPage
+                    ? AppColors.accent
+                    : AppColors.border,
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
-          );
-        },
-        separatorBuilder: (_, _) => const SizedBox(width: 14),
-        itemCount: _recommendedBooks.length,
-      ),
+          ),
+        ),
+      ],
     );
   }
 
