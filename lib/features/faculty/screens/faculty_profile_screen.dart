@@ -241,6 +241,7 @@ class _FacultyProfileScreenState extends State<FacultyProfileScreen> {
                     ),
                   ),
                   GestureDetector(
+                    onTap: _showSettingsSheet,
                     child: Container(
                       width: 36,
                       height: 36,
