@@ -766,48 +766,6 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildNotificationBell(context),
             ],
           ),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: () => context.go('/search'),
-            child: Container(
-              width: double.infinity,
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.6),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.search_rounded,
-                    color: AppColors.navyBrand,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Search books, authors...',
-                    style: TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
