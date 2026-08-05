@@ -234,21 +234,38 @@ class _FacultyProfileScreenState extends State<FacultyProfileScreen> {
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
           child: Column(
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Profile',
-                  style: GoogleFonts.fraunces(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Profile',
+                    style: GoogleFonts.fraunces(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
+                  GestureDetector(
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.settings_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
               Container(
-                width: 84,
-                height: 84,
+                width: 72,
+                height: 72,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -259,8 +276,8 @@ class _FacultyProfileScreenState extends State<FacultyProfileScreen> {
                 ),
                 child: Center(
                   child: Container(
-                    width: 78,
-                    height: 78,
+                    width: 66,
+                    height: 66,
                     decoration: const BoxDecoration(
                       color: _inkDeep,
                       shape: BoxShape.circle,
@@ -271,28 +288,28 @@ class _FacultyProfileScreenState extends State<FacultyProfileScreen> {
                         style: GoogleFonts.fraunces(
                           color: _gold,
                           fontWeight: FontWeight.w800,
-                          fontSize: 26,
+                          fontSize: 22,
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               Text(
                 userName,
                 style: GoogleFonts.fraunces(
                   color: Colors.white,
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 email,
                 style: GoogleFonts.publicSans(
                   color: Colors.white.withValues(alpha: 0.6),
-                  fontSize: 13,
+                  fontSize: 12,
                 ),
               ),
             ],
@@ -399,6 +416,114 @@ class _FacultyProfileScreenState extends State<FacultyProfileScreen> {
         ),
         trailing: const Icon(Icons.chevron_right_rounded, color: _slateSoft),
       ),
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _cardLine, width: 1),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: _paper,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 20, color: _ink),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.publicSans(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: _ink,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: GoogleFonts.publicSans(
+            fontSize: 12,
+            color: _slateSoft,
+          ),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: Color(0xFF8A8CA3),
+          size: 22,
+        ),
+      ),
+    );
+  }
+
+  void _showSettingsSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _paper,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Settings',
+                      style: GoogleFonts.fraunces(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _ink,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Color(0xFF8A8CA3)),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildSettingsTile(
+                  icon: Icons.edit_rounded,
+                  title: 'Edit profile',
+                  subtitle: 'Update your personal details',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/profile/edit');
+                  },
+                ),
+                const SizedBox(height: 8),
+                _buildSettingsTile(
+                  icon: Icons.notifications_outlined,
+                  title: 'Notification settings',
+                  subtitle: 'Manage your notification channels',
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/settings');
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

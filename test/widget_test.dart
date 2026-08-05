@@ -7,7 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:pantasv2/app.dart';
+import 'package:Pantas/app.dart';
 
 void main() {
   testWidgets('App loads without errors', (WidgetTester tester) async {
