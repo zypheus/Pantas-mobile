@@ -274,23 +274,91 @@ class AppRouter {
   );
 }
 
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   final Widget child;
   const AppShell({required this.child, super.key});
 
   @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  DateTime? _lastBackPressed;
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(body: child, bottomNavigationBar: const FloatingNavBar());
+    return PopScope(
+      canPop: _lastBackPressed != null &&
+          DateTime.now().difference(_lastBackPressed!) <
+              const Duration(seconds: 2),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        final now = DateTime.now();
+        if (_lastBackPressed != null &&
+            now.difference(_lastBackPressed!) < const Duration(seconds: 2)) {
+          _lastBackPressed = null;
+          setState(() {});
+          return;
+        }
+        setState(() => _lastBackPressed = now);
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Press back again to exit'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+      },
+      child: Scaffold(
+        body: widget.child,
+        bottomNavigationBar: const FloatingNavBar(),
+      ),
+    );
   }
 }
 
-class FacultyShell extends StatelessWidget {
+class FacultyShell extends StatefulWidget {
   final Widget child;
   const FacultyShell({required this.child, super.key});
 
   @override
+  State<FacultyShell> createState() => _FacultyShellState();
+}
+
+class _FacultyShellState extends State<FacultyShell> {
+  DateTime? _lastBackPressed;
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(body: child, bottomNavigationBar: const FacultyFloatingNavBar());
+    return PopScope(
+      canPop: _lastBackPressed != null &&
+          DateTime.now().difference(_lastBackPressed!) <
+              const Duration(seconds: 2),
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        final now = DateTime.now();
+        if (_lastBackPressed != null &&
+            now.difference(_lastBackPressed!) < const Duration(seconds: 2)) {
+          _lastBackPressed = null;
+          setState(() {});
+          return;
+        }
+        setState(() => _lastBackPressed = now);
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Press back again to exit'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+      },
+      child: Scaffold(
+        body: widget.child,
+        bottomNavigationBar: const FacultyFloatingNavBar(),
+      ),
+    );
   }
 }
 
