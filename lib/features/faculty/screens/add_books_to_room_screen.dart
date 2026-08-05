@@ -90,9 +90,10 @@ class _AddBooksToRoomScreenState extends State<AddBooksToRoomScreen> {
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : TextButton(
+                          : TextButton.icon(
                               onPressed: () => _share(folder),
-                              child: const Text('Share'),
+                              icon: const Icon(Icons.share_rounded, size: 18),
+                              label: const Text('Share'),
                             ),
                     );
                   },
