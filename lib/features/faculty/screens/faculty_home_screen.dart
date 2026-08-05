@@ -145,12 +145,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               const SizedBox(height: 16),
               _buildQuickActions(context),
               const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: SectionTitle(
                   title: 'Recommended Books',
-                  actionLabel: 'View all',
-                  onAction: () => context.go('/faculty/catalog'),
                 ),
               ),
               const SizedBox(height: 12),
@@ -332,7 +330,14 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
             itemCount: _recommendedBooks.length,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 4),
+        Center(
+          child: TextButton(
+            onPressed: () => context.go('/faculty/catalog'),
+            child: const Text('View all'),
+          ),
+        ),
+        const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
