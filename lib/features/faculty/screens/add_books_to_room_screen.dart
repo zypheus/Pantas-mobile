@@ -82,6 +82,10 @@ class _AddBooksToRoomScreenState extends State<AddBooksToRoomScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      leading: const Icon(
+                        Icons.folder_rounded,
+                        color: AppColors.navyBrand,
+                      ),
                       title: Text(folder.name),
                       subtitle: Text('${folder.bookCount} books'),
                       trailing: sharing
